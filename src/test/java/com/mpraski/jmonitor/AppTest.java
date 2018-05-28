@@ -1,4 +1,4 @@
-package com.mpraski.javamonitor.JavaMonitor;
+package com.mpraski.jmonitor;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
