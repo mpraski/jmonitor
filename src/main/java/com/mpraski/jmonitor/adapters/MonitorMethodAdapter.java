@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.objectweb.asm.Handle;
@@ -25,6 +26,8 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	private final Map<Integer, LocalVariable> localNames;
 	private final List<EventMonitor> beforeMonitors, afterMonitors, insteadMonitors;
 
+	private final Map<EventPatternMatcher, Boolean> matchesFrom;
+
 	protected MonitorMethodAdapter(int api, String owner, int access, String name, String desc, MethodVisitor mv,
 			Set<EventPatternMatcher> matchers) {
 		super(api, owner, access, name, desc, mv);
@@ -33,6 +36,8 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		this.thisDesc = desc;
 		this.thisOwner = owner;
 		this.matchers = matchers.stream().collect(Collectors.groupingBy(EventPatternMatcher::getType));
+		this.matchesFrom = matchers.stream()
+				.collect(Collectors.toMap(Function.identity(), m -> m.matchesFrom(thisName)));
 		this.beforeMonitors = new ArrayList<>();
 		this.afterMonitors = new ArrayList<>();
 		this.insteadMonitors = new ArrayList<>();
@@ -49,35 +54,27 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		case FRETURN:
 		case DRETURN:
 		case RETURN:
-			for (EventPatternMatcher m : matchers.get(EventType.RETURN)) {
-				if (m.matchesFrom(thisName)) {
-					addMonitors(m.getMonitors());
-				}
-			}
+			tryMatch(EventType.RETURN);
 			break;
 		case ARETURN:
 			String ret = getTop();
 
-			for (EventPatternMatcher m : matchers.get(EventType.RETURN)) {
-				if (m.matchesFrom(thisName) && m.matchesOf(ret)) {
-					addMonitors(m.getMonitors());
-				}
-			}
+			tryMatch(EventType.RETURN, ret);
 			break;
 		case MONITORENTER:
 			String obj = getTop();
+
+			tryMatch(EventType.MONITOR_ENTER, obj);
 			break;
 		case MONITOREXIT:
 			String obj2 = getTop();
+
+			tryMatch(EventType.MONITOR_EXIT, obj2);
 			break;
 		case ATHROW:
 			String ex = getTop();
 
-			for (EventPatternMatcher m : matchers.get(EventType.THROW)) {
-				if (m.matchesFrom(thisName) && m.matchesOf(ex)) {
-					addMonitors(m.getMonitors());
-				}
-			}
+			tryMatch(EventType.THROW, ex);
 			break;
 		}
 
@@ -86,10 +83,12 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	@Override
 	public void visitFieldInsn(int opcode, String owner, String name, String desc) {
+		resetMonitors();
+		
 		switch (opcode) {
 		case GETFIELD:
 			for (EventPatternMatcher m : matchers.get(EventType.FIELD_READ)) {
-				if (m.matchesFrom(thisName) && (m.matchesOf(name) || m.matchesOf(desc))) {
+				if (matchesFrom.get(m) && (m.matchesOf(name) || m.matchesOf(desc))) {
 					addMonitors(m.getMonitors());
 				}
 			}
@@ -170,6 +169,22 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 			throw new IllegalStateException("Stack is empty");
 
 		return (T) stack.get(stack.size() - 1);
+	}
+
+	private void tryMatch(EventType type) {
+		for (EventPatternMatcher m : matchers.get(type)) {
+			if (matchesFrom.get(m)) {
+				addMonitors(m.getMonitors());
+			}
+		}
+	}
+
+	private void tryMatch(EventType type, String of) {
+		for (EventPatternMatcher m : matchers.get(type)) {
+			if (matchesFrom.get(m) && m.matchesOf(of)) {
+				addMonitors(m.getMonitors());
+			}
+		}
 	}
 
 	private void resetMonitors() {
