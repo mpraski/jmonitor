@@ -9,6 +9,7 @@ import com.mpraski.jmonitor.pattern.EventPatternMatcher;
 
 public class MonitorClassAdapter extends ClassVisitor {
 	private final Set<EventPatternMatcher> matchers;
+	private String owner;
 
 	public MonitorClassAdapter(int api, Set<EventPatternMatcher> matchers) {
 		super(api);
@@ -21,10 +22,15 @@ public class MonitorClassAdapter extends ClassVisitor {
 	}
 
 	@Override
+	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+		this.owner = name;
+	}
+
+	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 		MethodVisitor mv = cv.visitMethod(access, name, desc, signature, exceptions);
 		if (mv != null) {
-			// mv = new MonitorMethodAdapter(api, mv, matchers);
+			mv = new MonitorMethodAdapter(api, owner, access, name, desc, mv, matchers);
 		}
 		return mv;
 	}

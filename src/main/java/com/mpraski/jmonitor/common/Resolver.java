@@ -7,6 +7,7 @@ public final class Resolver {
 	private final static Map<String, Monitor> monitors = new HashMap<>();
 	private final static Map<String, InsteadMonitor> insteadMonitors = new HashMap<>();
 
+	@SuppressWarnings("unchecked")
 	public static Monitor getMonitor(String name) {
 		if (monitors.containsKey(name))
 			return monitors.get(name);
@@ -19,6 +20,9 @@ public final class Resolver {
 			e.printStackTrace();
 		}
 
+		if (clazz == null)
+			return null;
+
 		Monitor m = null;
 		try {
 			m = clazz.newInstance();
@@ -27,11 +31,13 @@ public final class Resolver {
 			e.printStackTrace();
 		}
 
-		monitors.put(name, m);
+		if (m != null)
+			monitors.put(name, m);
 
 		return m;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static InsteadMonitor getInsteadMonitor(String name) {
 		if (insteadMonitors.containsKey(name))
 			return insteadMonitors.get(name);
@@ -44,6 +50,9 @@ public final class Resolver {
 			e.printStackTrace();
 		}
 
+		if (clazz == null)
+			return null;
+
 		InsteadMonitor m = null;
 		try {
 			m = clazz.newInstance();
@@ -52,7 +61,8 @@ public final class Resolver {
 			e.printStackTrace();
 		}
 
-		insteadMonitors.put(name, m);
+		if (m != null)
+			insteadMonitors.put(name, m);
 
 		return m;
 	}

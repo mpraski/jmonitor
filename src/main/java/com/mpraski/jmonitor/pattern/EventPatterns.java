@@ -2,7 +2,7 @@ package com.mpraski.jmonitor.pattern;
 
 import com.mpraski.jmonitor.event.EventType;
 
-public class EventPatterns {
+public final class EventPatterns {
 	public static EventPattern onMethodCall() {
 		return new EventPattern(EventType.METHOD_CALL);
 	}

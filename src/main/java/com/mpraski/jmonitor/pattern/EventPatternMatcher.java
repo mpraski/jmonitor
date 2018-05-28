@@ -76,6 +76,7 @@ public final class EventPatternMatcher {
 		return l;
 	}
 
+	@SuppressWarnings("unused")
 	private static Pattern getNegated(Map<String, Boolean> items) throws PatternSyntaxException {
 		StringBuilder sb = new StringBuilder();
 		sb.append("(?!");
@@ -103,5 +104,21 @@ public final class EventPatternMatcher {
 
 	public Set<EventMonitor> getMonitors() {
 		return monitors;
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder builder = new StringBuilder();
+
+		builder.append("Type: '" + this.type + "'");
+
+		builder.append("\n-------------------------\n");
+
+		monitors.forEach(m -> {
+			builder.append(m);
+			builder.append("\n");
+		});
+
+		return builder.toString();
 	}
 }

@@ -48,6 +48,12 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		case LRETURN:
 		case FRETURN:
 		case DRETURN:
+		case RETURN:
+			for (EventPatternMatcher m : matchers.get(EventType.RETURN)) {
+				if (m.matchesFrom(thisName)) {
+					addMonitors(m.getMonitors());
+				}
+			}
 			break;
 		case ARETURN:
 			String ret = getTop();
@@ -57,8 +63,6 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 					addMonitors(m.getMonitors());
 				}
 			}
-			break;
-		case RETURN:
 			break;
 		case MONITORENTER:
 			String obj = getTop();
@@ -162,6 +166,9 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	@SuppressWarnings("unchecked")
 	private <T> T getTop() {
+		if (stack.isEmpty())
+			throw new IllegalStateException("Stack is empty");
+
 		return (T) stack.get(stack.size() - 1);
 	}
 
@@ -172,6 +179,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	private void addMonitors(Set<EventMonitor> ms) {
+		System.out.println("Got match!");
 		for (EventMonitor m : ms) {
 			switch (m.getOrder()) {
 			case BEFORE:
