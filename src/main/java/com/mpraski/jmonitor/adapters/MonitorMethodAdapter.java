@@ -39,20 +39,6 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		this.localNames = new HashMap<>();
 	}
 
-	protected MonitorMethodAdapter(String owner, int access, String name, String desc, MethodVisitor mv,
-			Set<EventPatternMatcher> matchers) {
-		super(owner, access, name, desc, mv);
-
-		this.thisName = name;
-		this.thisDesc = desc;
-		this.thisOwner = owner;
-		this.matchers = matchers.stream().collect(Collectors.groupingBy(EventPatternMatcher::getType));
-		this.beforeMonitors = new ArrayList<>();
-		this.afterMonitors = new ArrayList<>();
-		this.insteadMonitors = new ArrayList<>();
-		this.localNames = new HashMap<>();
-	}
-
 	@Override
 	public void visitInsn(int opcode) {
 		resetMonitors();
@@ -75,8 +61,10 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		case RETURN:
 			break;
 		case MONITORENTER:
+			String obj = getTop();
 			break;
 		case MONITOREXIT:
+			String obj2 = getTop();
 			break;
 		case ATHROW:
 			String ex = getTop();
