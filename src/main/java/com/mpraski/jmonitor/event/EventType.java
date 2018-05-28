@@ -1,0 +1,5 @@
+package com.mpraski.jmonitor.event;
+
+public enum EventType {
+	FIELD_READ, FIELD_WRITE, METHOD_CALL, RETURN, THROW, INSTANCE, INSTANCE_ARRAY, MONITOR_ENTER, MONITOR_EXIT, ANY, AND, OR, NOT
+}
