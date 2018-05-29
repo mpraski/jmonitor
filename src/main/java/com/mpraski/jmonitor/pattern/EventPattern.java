@@ -28,14 +28,14 @@ public final class EventPattern {
 	private EventPattern(EventType type, EventPattern op1) {
 		this.type = type;
 
-		this.op1 = Objects.requireNonNull(op1, "Op cannot be null").clone();
+		this.op1 = Objects.requireNonNull(op1, "Op1 cannot be null").clone();
 	}
 
 	private EventPattern(EventType type, EventPattern op1, EventPattern op2) {
 		this.type = type;
 
-		this.op1 = Objects.requireNonNull(op1, "Op cannot be null").clone();
-		this.op2 = Objects.requireNonNull(op2, "Op cannot be null").clone();
+		this.op1 = Objects.requireNonNull(op1, "Op1 cannot be null").clone();
+		this.op2 = Objects.requireNonNull(op2, "Op2 cannot be null").clone();
 	}
 
 	private EventPattern(EventPattern p) {
@@ -173,5 +173,46 @@ public final class EventPattern {
 
 	protected boolean hasMonitors() {
 		return beforeMonitor != null || afterMonitor != null || insteadMonitor != null;
+	}
+
+	// Event pattern definitions
+	public static EventPattern onMethodCall() {
+		return new EventPattern(EventType.METHOD_CALL);
+	}
+
+	public static EventPattern onFieldRead() {
+		return new EventPattern(EventType.FIELD_READ);
+	}
+
+	public static EventPattern onFieldWrite() {
+		return new EventPattern(EventType.FIELD_WRITE);
+	}
+
+	public static EventPattern onReturn() {
+		return new EventPattern(EventType.RETURN);
+	}
+
+	public static EventPattern onThrow() {
+		return new EventPattern(EventType.METHOD_CALL);
+	}
+
+	public static EventPattern onInstanceCreated() {
+		return new EventPattern(EventType.INSTANCE);
+	}
+
+	public static EventPattern onArrayCreated() {
+		return new EventPattern(EventType.INSTANCE_ARRAY);
+	}
+
+	public static EventPattern onMonitorEnter() {
+		return new EventPattern(EventType.MONITOR_ENTER);
+	}
+
+	public static EventPattern onMonitorExit() {
+		return new EventPattern(EventType.MONITOR_EXIT);
+	}
+
+	public static EventPattern onAnyEvent() {
+		return new EventPattern(EventType.ANY);
 	}
 }
