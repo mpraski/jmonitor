@@ -1,6 +1,6 @@
 package com.mpraski.jmonitor.adapters;
 
-import java.util.Set;
+import java.util.List;
 
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -8,15 +8,15 @@ import org.objectweb.asm.MethodVisitor;
 import com.mpraski.jmonitor.pattern.EventPatternMatcher;
 
 public class MonitorClassAdapter extends ClassVisitor {
-	private final Set<EventPatternMatcher> matchers;
+	private final List<EventPatternMatcher> matchers;
 	private String owner;
 
-	public MonitorClassAdapter(int api, Set<EventPatternMatcher> matchers) {
+	public MonitorClassAdapter(int api, List<EventPatternMatcher> matchers) {
 		super(api);
 		this.matchers = matchers;
 	}
 
-	public MonitorClassAdapter(int api, ClassVisitor classVisitor, Set<EventPatternMatcher> matchers) {
+	public MonitorClassAdapter(int api, ClassVisitor classVisitor, List<EventPatternMatcher> matchers) {
 		super(api, classVisitor);
 		this.matchers = matchers;
 	}

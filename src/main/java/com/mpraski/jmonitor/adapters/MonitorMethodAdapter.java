@@ -29,7 +29,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	private final List<EventMonitor> beforeMonitors, afterMonitors, insteadMonitors;
 
 	protected MonitorMethodAdapter(int api, String owner, int access, String name, String desc, MethodVisitor mv,
-			Set<EventPatternMatcher> matchers) {
+			List<EventPatternMatcher> matchers) {
 		super(api, owner, access, name, desc, mv);
 
 		this.thisName = name;

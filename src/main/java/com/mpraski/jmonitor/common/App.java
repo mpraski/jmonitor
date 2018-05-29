@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -56,7 +55,7 @@ public class App {
 
 		// matchers.forEach(System.out::println);
 
-		Set<EventPatternMatcher> matchers = compiler.compile2(patterns);
+		List<EventPatternMatcher> matchers = compiler.compile2(patterns);
 		matchers.forEach(System.out::println);
 
 		Path path = Paths.get("./bytecode_test/Example.class");
