@@ -23,10 +23,10 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	private final String thisName, thisDesc, thisOwner;
 	private final Map<EventType, List<EventPatternMatcher>> matchers;
-	private final Map<Integer, LocalVariable> localNames;
-	private final List<EventMonitor> beforeMonitors, afterMonitors, insteadMonitors;
-
 	private final Map<EventPatternMatcher, Boolean> matchesFrom;
+	private final Map<Integer, LocalVariable> localNames;
+
+	private final List<EventMonitor> beforeMonitors, afterMonitors, insteadMonitors;
 
 	protected MonitorMethodAdapter(int api, String owner, int access, String name, String desc, MethodVisitor mv,
 			Set<EventPatternMatcher> matchers) {
@@ -84,7 +84,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	@Override
 	public void visitFieldInsn(int opcode, String owner, String name, String desc) {
 		resetMonitors();
-		
+
 		switch (opcode) {
 		case GETFIELD:
 			for (EventPatternMatcher m : matchers.get(EventType.FIELD_READ)) {
