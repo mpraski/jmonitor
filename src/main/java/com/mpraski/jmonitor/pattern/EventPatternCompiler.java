@@ -27,7 +27,7 @@ public final class EventPatternCompiler {
 		return new ArrayList<>(matchers);
 	}
 
-	public List<EventPatternMatcher> compile2(List<EventPattern> patterns) {
+	public List<EventPatternMatcher> compileMatchers(List<EventPattern> patterns) {
 		matchers.clear();
 
 		final List<EventPatternTemporary> temp = new ArrayList<>();

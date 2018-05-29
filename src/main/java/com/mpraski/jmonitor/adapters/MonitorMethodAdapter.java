@@ -212,7 +212,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	private void insertMonitors(Runnable action) {
 		for (EventMonitor m : beforeMonitors) {
-			// Insert stubs
+			// Insert stub
 		}
 
 		if (insteadMonitors.isEmpty()) {

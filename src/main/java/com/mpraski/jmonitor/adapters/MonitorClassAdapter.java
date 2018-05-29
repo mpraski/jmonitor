@@ -8,6 +8,7 @@ import org.objectweb.asm.MethodVisitor;
 import com.mpraski.jmonitor.pattern.EventPatternMatcher;
 
 public class MonitorClassAdapter extends ClassVisitor {
+	// matchers
 	private final List<EventPatternMatcher> matchers;
 	private String owner;
 

@@ -55,7 +55,7 @@ public class App {
 
 		// matchers.forEach(System.out::println);
 
-		List<EventPatternMatcher> matchers = compiler.compile2(patterns);
+		List<EventPatternMatcher> matchers = compiler.compileMatchers(patterns);
 		matchers.forEach(System.out::println);
 
 		Path path = Paths.get("./bytecode_test/Example.class");
