@@ -18,6 +18,7 @@ import com.mpraski.jmonitor.event.EventType;
 import com.mpraski.jmonitor.pattern.EventMonitor;
 import com.mpraski.jmonitor.pattern.EventPatternMatcher;
 import com.mpraski.jmonitor.util.LocalVariable;
+import com.mpraski.jmonitor.util.ToString;
 
 public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
@@ -225,6 +226,70 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 		for (EventMonitor m : afterMonitors) {
 			// Insert stubs
+		}
+	}
+
+	private static void generateEventDefinition(MethodVisitor mv, String tag, EventType type, String signature,
+			Object target, Object[] arguments) {
+		mv.visitTypeInsn(NEW, "com/mpraski/jmonitor/event/Event");
+		mv.visitInsn(DUP);
+		mv.visitLdcInsn(tag);
+		mv.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/event/EventType", ToString.eventType(type),
+				"Lcom/mpraski/jmonitor/event/EventType;");
+		mv.visitLdcInsn(signature);
+		mv.visitInsn(ACONST_NULL);
+		mv.visitInsn(ACONST_NULL);
+		mv.visitMethodInsn(INVOKESTATIC, "java/lang/Thread", "currentThread", "()Ljava/lang/Thread;", false);
+		mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Thread", "getStackTrace", "()[Ljava/lang/StackTraceElement;",
+				false);
+		mv.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/event/Event", "<init>",
+				"(Ljava/lang/String;Lcom/mpraski/jmonitor/event/EventType;Ljava/lang/String;Ljava/lang/Object;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
+				false);
+		mv.visitVarInsn(ASTORE, 1);
+		mv.visitInsn(RETURN);
+		mv.visitMaxs(8, 2);
+		mv.visitEnd();
+	}
+
+	public static void beforeRead(MethodVisitor mv) {
+
+	}
+
+	private static void autobox(MethodVisitor mv, String desc) {
+		if (desc.length() > 1)
+			return;
+
+		String type = null;
+
+		switch (desc) {
+		case "Z":
+			type = "Boolean";
+			break;
+		case "C":
+			type = "Character";
+			break;
+		case "B":
+			type = "Byte";
+			break;
+		case "S":
+			type = "Short";
+			break;
+		case "I":
+			type = "Integer";
+			break;
+		case "F":
+			type = "Float";
+			break;
+		case "J":
+			type = "Long";
+			break;
+		case "D":
+			type = "Double";
+			break;
+		}
+
+		if (type != null) {
+			mv.visitMethodInsn(INVOKESTATIC, "java/lang/" + type, "valueOf", "(I)Ljava/lang/" + type + ";", false);
 		}
 	}
 }

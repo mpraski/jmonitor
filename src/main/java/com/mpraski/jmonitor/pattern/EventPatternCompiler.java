@@ -64,7 +64,7 @@ public final class EventPatternCompiler {
 	}
 
 	private void addMatchers(List<EventPatternTemporary> temp) {
-		temp.stream().filter(m -> m != null && m.hasMonitors()).forEach(matchers::add);
+		temp.stream().filter(EventPatternTemporary::hasMonitors).forEach(matchers::add);
 	}
 
 	private void addMatchers(EventPatternTemporary... temp) {

@@ -15,7 +15,7 @@ public final class Event {
 	private final String tag;
 	// Specified type of event
 	private final EventType type;
-	// Signature of the event taget - 'of' match
+	// Signature of the event target - 'of' match
 	private final String signature;
 	// Value of the event target - if any
 	private final Object target;
