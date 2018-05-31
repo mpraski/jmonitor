@@ -1,12 +1,10 @@
 package com.mpraski.jmonitor.adapters;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
@@ -36,9 +34,15 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		this.thisName = name;
 		this.thisDesc = desc;
 		this.thisOwner = owner;
-		this.matchers = matchers.stream().collect(Collectors.groupingBy(EventPatternMatcher::getType));
-		this.matchesFrom = matchers.stream()
-				.collect(Collectors.toMap(Function.identity(), m -> m.matchesFrom(thisName)));
+		this.matchers = new HashMap<>();
+		this.matchesFrom = new HashMap<>();
+
+		for (EventPatternMatcher m : matchers) {
+			this.matchers.putIfAbsent(m.getType(), new ArrayList<>());
+			this.matchers.get(m.getType()).add(m);
+			this.matchesFrom.put(m, m.matchesFrom(thisName));
+		}
+
 		this.beforeMonitors = new ArrayList<>();
 		this.afterMonitors = new ArrayList<>();
 		this.insteadMonitors = new ArrayList<>();
@@ -88,17 +92,16 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 		switch (opcode) {
 		case GETFIELD:
-			for (EventPatternMatcher m : matchers.get(EventType.FIELD_READ)) {
-				if (matchesFrom.get(m) && (m.matchesOf(name) || m.matchesOf(desc))) {
-					addMonitors(m.getMonitors());
-				}
-			}
+			tryMatch(EventType.FIELD_READ, name);
 			break;
 		case PUTFIELD:
+			tryMatch(EventType.FIELD_WRITE, name);
 			break;
 		case GETSTATIC:
+			tryMatch(EventType.FIELD_READ_STATIC, name);
 			break;
 		case PUTSTATIC:
+			tryMatch(EventType.FIELD_WRITE_STATIC, name);
 			break;
 		}
 
@@ -173,18 +176,16 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	private void tryMatch(EventType type) {
-		for (EventPatternMatcher m : matchers.get(type)) {
-			if (matchesFrom.get(m)) {
-				addMonitors(m.getMonitors());
-			}
+		for (EventPatternMatcher m : getMatchers(type)) {
+			if (matchesFrom.get(m))
+				addMonitors(m);
 		}
 	}
 
 	private void tryMatch(EventType type, String of) {
-		for (EventPatternMatcher m : matchers.get(type)) {
-			if (matchesFrom.get(m) && m.matchesOf(of)) {
-				addMonitors(m.getMonitors());
-			}
+		for (EventPatternMatcher m : getMatchers(type)) {
+			if (matchesFrom.get(m) && m.matchesOf(of))
+				addMonitors(m, of, null, null, null);
 		}
 	}
 
@@ -194,17 +195,39 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		insteadMonitors.clear();
 	}
 
-	private void addMonitors(Set<EventMonitor> ms) {
-		for (EventMonitor m : ms) {
+	private List<EventPatternMatcher> getMatchers(EventType type) {
+		return matchers.getOrDefault(type, Collections.<EventPatternMatcher>emptyList());
+	}
+
+	private void addMonitors(EventPatternMatcher e) {
+		for (EventMonitor m : e.getMonitors()) {
+			EventData d = new EventData(e.getType(), e.getTag(), null, m.getMonitor());
 			switch (m.getOrder()) {
 			case BEFORE:
-				beforeMonitors.add(e);
+				beforeMonitors.add(d);
 				break;
 			case AFTER:
-				afterMonitors.add(e);
+				afterMonitors.add(d);
 				break;
 			case INSTEAD:
-				insteadMonitors.add(e);
+				insteadMonitors.add(d);
+				break;
+			}
+		}
+	}
+
+	private void addMonitors(EventPatternMatcher e, String signature, String name, String desc, String owner) {
+		for (EventMonitor m : e.getMonitors()) {
+			EventData d = new EventData(e.getType(), e.getTag(), signature, m.getMonitor(), name, desc, owner);
+			switch (m.getOrder()) {
+			case BEFORE:
+				beforeMonitors.add(d);
+				break;
+			case AFTER:
+				afterMonitors.add(d);
+				break;
+			case INSTEAD:
+				insteadMonitors.add(d);
 				break;
 			}
 		}
@@ -244,7 +267,27 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		}
 
 		for (EventData e : afterMonitors) {
-			// Insert stubs
+			switch (e.getType()) {
+			case FIELD_READ:
+				generateFieldRead(mv, e);
+				break;
+			case FIELD_WRITE:
+				break;
+			case METHOD_CALL:
+				break;
+			case RETURN:
+				break;
+			case THROW:
+				break;
+			case INSTANCE:
+				break;
+			case INSTANCE_ARRAY:
+				break;
+			case MONITOR_ENTER:
+				break;
+			case MONITOR_EXIT:
+				break;
+			}
 		}
 	}
 

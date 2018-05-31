@@ -10,12 +10,14 @@ import java.util.regex.PatternSyntaxException;
 import com.mpraski.jmonitor.event.EventType;
 
 public final class EventPatternMatcher {
+	private final String tag;
 	private final EventType type;
 	private final List<Pattern> inPatternPositive, fromPatternPositive, ofPatternPositive;
 	private final List<Pattern> inPatternNegative, fromPatternNegative, ofPatternNegative;
 	private final Set<EventMonitor> monitors;
 
 	public EventPatternMatcher(EventPatternTemporary t) {
+		this.tag = t.getTag();
 		this.type = t.getType();
 		this.monitors = t.getMonitors();
 		this.inPatternPositive = getPatterns(t.getInPattern(), true);
@@ -96,6 +98,10 @@ public final class EventPatternMatcher {
 		sb.append(")");
 
 		return Pattern.compile(sb.toString());
+	}
+
+	public String getTag() {
+		return tag;
 	}
 
 	public EventType getType() {

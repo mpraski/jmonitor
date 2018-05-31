@@ -142,14 +142,14 @@ public final class EventPatternCompiler {
 		}
 
 		temp.clear();
-		temp.add(new EventPatternTemporary(andType, inPattern, fromPattern, ofPattern));
+		temp.add(new EventPatternTemporary(p.getTag(), andType, inPattern, fromPattern, ofPattern));
 
 		addMonitor(temp, p);
 		addMatchers(temp);
 	}
 
 	private void merge(List<EventPatternTemporary> result, final EventPattern p) {
-		result.replaceAll(m -> new EventPatternTemporary(m.getType(),
+		result.replaceAll(m -> new EventPatternTemporary(m.getTag(), m.getType(),
 				p.getIn() != null ? mapOfPatterns(p.getIn()) : m.getInPattern(),
 				p.getFrom() != null ? mapOfPatterns(p.getFrom()) : m.getFromPattern(),
 				p.getOf() != null ? mapOfPatterns(p.getOf()) : m.getOfPattern()));

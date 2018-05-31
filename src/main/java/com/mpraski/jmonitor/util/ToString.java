@@ -13,6 +13,12 @@ public final class ToString {
 		case FIELD_WRITE:
 			s = "FIELD_WRITE";
 			break;
+		case FIELD_READ_STATIC:
+			s = "FIELD_READ_STATIC";
+			break;
+		case FIELD_WRITE_STATIC:
+			s = "FIELD_WRITE_STATIC";
+			break;
 		case METHOD_CALL:
 			s = "METHOD_CALL";
 			break;

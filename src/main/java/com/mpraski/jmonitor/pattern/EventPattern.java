@@ -188,6 +188,14 @@ public final class EventPattern {
 		return new EventPattern(EventType.FIELD_WRITE);
 	}
 
+	public static EventPattern onStaticFieldRead() {
+		return new EventPattern(EventType.FIELD_READ_STATIC);
+	}
+
+	public static EventPattern onStaticFieldWrite() {
+		return new EventPattern(EventType.FIELD_WRITE_STATIC);
+	}
+
 	public static EventPattern onReturn() {
 		return new EventPattern(EventType.RETURN);
 	}

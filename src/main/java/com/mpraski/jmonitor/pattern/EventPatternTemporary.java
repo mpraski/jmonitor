@@ -9,6 +9,7 @@ import java.util.Set;
 import com.mpraski.jmonitor.event.EventType;
 
 public final class EventPatternTemporary {
+	private final String tag;
 	private final EventType type;
 
 	private final Map<String, Boolean> ofPattern;
@@ -18,6 +19,7 @@ public final class EventPatternTemporary {
 	private final Set<EventMonitor> monitors;
 
 	public EventPatternTemporary(EventPattern p) {
+		this.tag = p.getTag();
 		this.type = p.getType();
 
 		this.ofPattern = new HashMap<>();
@@ -39,7 +41,8 @@ public final class EventPatternTemporary {
 		addMonitor(p.getInsteadMonitor());
 	}
 
-	public EventPatternTemporary(EventType type, String inPattern, String fromPattern, String ofPattern) {
+	public EventPatternTemporary(String tag, EventType type, String inPattern, String fromPattern, String ofPattern) {
+		this.tag = tag;
 		this.type = type;
 
 		this.ofPattern = new HashMap<>();
@@ -54,8 +57,9 @@ public final class EventPatternTemporary {
 		this.monitors = new HashSet<>();
 	}
 
-	public EventPatternTemporary(EventType type, Map<String, Boolean> inPattern, Map<String, Boolean> fromPattern,
-			Map<String, Boolean> ofPattern) {
+	public EventPatternTemporary(String tag, EventType type, Map<String, Boolean> inPattern,
+			Map<String, Boolean> fromPattern, Map<String, Boolean> ofPattern) {
+		this.tag = tag;
 		this.type = type;
 
 		this.ofPattern = ofPattern;
@@ -67,6 +71,7 @@ public final class EventPatternTemporary {
 	}
 
 	private EventPatternTemporary(EventPatternTemporary m, boolean negated) {
+		this.tag = m.tag;
 		this.type = m.type;
 
 		if (negated) {
@@ -138,6 +143,10 @@ public final class EventPatternTemporary {
 
 	public Map<String, Boolean> getOfPattern() {
 		return ofPattern;
+	}
+
+	public String getTag() {
+		return tag;
 	}
 
 	public EventType getType() {
