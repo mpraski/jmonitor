@@ -27,7 +27,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	private final Map<EventPatternMatcher, Boolean> matchesFrom;
 	private final Map<Integer, LocalVariable> localNames;
 
-	private final List<EventMonitor> beforeMonitors, afterMonitors, insteadMonitors;
+	private final List<EventData> beforeMonitors, afterMonitors, insteadMonitors;
 
 	protected MonitorMethodAdapter(int api, String owner, int access, String name, String desc, MethodVisitor mv,
 			List<EventPatternMatcher> matchers) {
@@ -195,64 +195,94 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	private void addMonitors(Set<EventMonitor> ms) {
-		System.out.println("Got match!");
 		for (EventMonitor m : ms) {
 			switch (m.getOrder()) {
 			case BEFORE:
-				beforeMonitors.add(m);
+				beforeMonitors.add(e);
 				break;
 			case AFTER:
-				afterMonitors.add(m);
+				afterMonitors.add(e);
 				break;
 			case INSTEAD:
-				insteadMonitors.add(m);
+				insteadMonitors.add(e);
 				break;
 			}
 		}
 	}
 
 	private void insertMonitors(Runnable action) {
-		for (EventMonitor m : beforeMonitors) {
-			// Insert stub
+		for (EventData e : beforeMonitors) {
+			switch (e.getType()) {
+			case FIELD_READ:
+				generateFieldRead(mv, e);
+				break;
+			case FIELD_WRITE:
+				break;
+			case METHOD_CALL:
+				break;
+			case RETURN:
+				break;
+			case THROW:
+				break;
+			case INSTANCE:
+				break;
+			case INSTANCE_ARRAY:
+				break;
+			case MONITOR_ENTER:
+				break;
+			case MONITOR_EXIT:
+				break;
+			}
 		}
 
 		if (insteadMonitors.isEmpty()) {
 			action.run();
 		} else {
-			for (EventMonitor m : insteadMonitors) {
+			for (EventData e : insteadMonitors) {
 				// Insert stubs
 			}
 		}
 
-		for (EventMonitor m : afterMonitors) {
+		for (EventData e : afterMonitors) {
 			// Insert stubs
 		}
 	}
 
-	private static void generateEventDefinition(MethodVisitor mv, String tag, EventType type, String signature,
-			Object target, Object[] arguments) {
+	private static void generateFieldRead(MethodVisitor mv, EventData e) {
+		visitEventStart(mv, e.getTag(), e.getType(), e.getSignature());
+		mv.visitFieldInsn(GETFIELD, e.getOwner(), e.getName(), e.getDesc());
+		autobox(mv, e.getDesc());
+		mv.visitInsn(ACONST_NULL);
+		visitEventEnd(mv);
+	}
+
+	private static void visitEventStart(MethodVisitor mv, String tag, EventType type, String signature) {
 		mv.visitTypeInsn(NEW, "com/mpraski/jmonitor/event/Event");
 		mv.visitInsn(DUP);
 		mv.visitLdcInsn(tag);
 		mv.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/event/EventType", ToString.eventType(type),
 				"Lcom/mpraski/jmonitor/event/EventType;");
 		mv.visitLdcInsn(signature);
-		mv.visitInsn(ACONST_NULL);
-		mv.visitInsn(ACONST_NULL);
+	}
+
+	private static void visitEventEnd(MethodVisitor mv) {
 		mv.visitMethodInsn(INVOKESTATIC, "java/lang/Thread", "currentThread", "()Ljava/lang/Thread;", false);
 		mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Thread", "getStackTrace", "()[Ljava/lang/StackTraceElement;",
 				false);
 		mv.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/event/Event", "<init>",
 				"(Ljava/lang/String;Lcom/mpraski/jmonitor/event/EventType;Ljava/lang/String;Ljava/lang/Object;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
 				false);
-		mv.visitVarInsn(ASTORE, 1);
-		mv.visitInsn(RETURN);
-		mv.visitMaxs(8, 2);
-		mv.visitEnd();
 	}
 
-	public static void beforeRead(MethodVisitor mv) {
+	private static void visitNewArray(MethodVisitor mv) {
+		mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+	}
 
+	private static void visitAddToArray(MethodVisitor mv) {
+		mv.visitInsn(DUP);
+		// mv.visitInsn(ICONST_0);
+		mv.visitVarInsn(ALOAD, 1);
+		mv.visitInsn(AASTORE);
 	}
 
 	private static void autobox(MethodVisitor mv, String desc) {

@@ -12,7 +12,9 @@ public class Example {
 	}
 
 	public void composeEvent() {
-		Event e = new Event("tag", EventType.FIELD_READ, "I", new Integer(1), null,
+		String yup = "yupp";
+		int aym = 3;
+		new Event("tag", EventType.FIELD_READ, "I", new Integer(1), new Object[] { yup, aym },
 				Thread.currentThread().getStackTrace());
 	}
 

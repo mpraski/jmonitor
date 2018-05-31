@@ -14,7 +14,7 @@ import com.mpraski.jmonitor.event.EventType;
 public final class EventPatternCompiler {
 	private final Set<EventPatternTemporary> matchers = new HashSet<>();
 
-	public List<EventPatternTemporary> compile(List<EventPattern> patterns) {
+	public List<EventPatternTemporary> compile__(List<EventPattern> patterns) {
 		matchers.clear();
 
 		final List<EventPatternTemporary> temp = new ArrayList<>();
@@ -27,7 +27,7 @@ public final class EventPatternCompiler {
 		return new ArrayList<>(matchers);
 	}
 
-	public List<EventPatternMatcher> compileMatchers(List<EventPattern> patterns) {
+	public List<EventPatternMatcher> compile(List<EventPattern> patterns) {
 		matchers.clear();
 
 		final List<EventPatternTemporary> temp = new ArrayList<>();
@@ -37,8 +37,7 @@ public final class EventPatternCompiler {
 			temp.clear();
 		}
 
-		return matchers.stream().filter(t -> t.getType() != EventType.NOT).map(EventPatternMatcher::new)
-				.collect(Collectors.toList());
+		return matchers.stream().map(EventPatternMatcher::new).collect(Collectors.toList());
 	}
 
 	private void _compile(List<EventPatternTemporary> temp, EventPattern p) {

@@ -19,6 +19,7 @@ import com.mpraski.jmonitor.pattern.EventPatternMatcher;
 
 public class App {
 	public static void main(String[] args) {
+		// Dummy event patterns
 		EventPattern p = EventPattern.onMethodCall().of("sdsd").doBefore("wolololo");
 
 		EventPattern p3 = p.not().doInstead("sdsdsdll");
@@ -50,14 +51,11 @@ public class App {
 		// patterns.add(p5);
 		patterns.add(p9);
 
-		EventPatternCompiler compiler = new EventPatternCompiler();
-		// Set<EventPatternTemporary> matchers = compiler.compile(patterns);
-
-		// matchers.forEach(System.out::println);
-
-		List<EventPatternMatcher> matchers = compiler.compileMatchers(patterns);
+		// Compile and print
+		List<EventPatternMatcher> matchers = new EventPatternCompiler().compile(patterns);
 		matchers.forEach(System.out::println);
 
+		// Test with dummy class file
 		Path path = Paths.get("./bytecode_test/Example.class");
 		byte[] data = null;
 

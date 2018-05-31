@@ -10,6 +10,9 @@ public final class ToString {
 		case FIELD_READ:
 			s = "FIELD_READ";
 			break;
+		case FIELD_WRITE:
+			s = "FIELD_WRITE";
+			break;
 		case METHOD_CALL:
 			s = "METHOD_CALL";
 			break;
@@ -42,8 +45,6 @@ public final class ToString {
 			break;
 		case NOT:
 			s = "NOT";
-			break;
-		case FIELD_WRITE:
 			break;
 		}
 
