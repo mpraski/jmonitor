@@ -25,6 +25,10 @@ public final class EventMonitor implements Comparable<EventMonitor> {
 		return order;
 	}
 
+	public String getFieldName() {
+		return monitor.replaceAll(".", "");
+	}
+
 	@Override
 	public String toString() {
 		return "Monitor: '" + Objects.toString(monitor, "null") + "', order: '" + Objects.toString(order, "null") + "'";

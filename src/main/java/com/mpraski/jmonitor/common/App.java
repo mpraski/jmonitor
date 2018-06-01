@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -13,6 +15,7 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 
 import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
+import com.mpraski.jmonitor.event.EventType;
 import com.mpraski.jmonitor.pattern.EventPattern;
 import com.mpraski.jmonitor.pattern.EventPatternCompiler;
 import com.mpraski.jmonitor.pattern.EventPatternMatcher;
@@ -41,7 +44,7 @@ public class App {
 
 		EventPattern p8 = p1.excluding(EventPattern.onAnyEvent().in("c")).doBefore("asdasd");
 
-		EventPattern p9 = EventPattern.onReturn().from("say(.)*").doBefore("lol");
+		EventPattern p9 = EventPattern.onFieldRead().of("lel").from("lol").doBefore("lol");
 
 		final List<EventPattern> patterns = new ArrayList<>();
 		// patterns.add(p);
@@ -53,6 +56,9 @@ public class App {
 
 		// Compile and print
 		List<EventPatternMatcher> matchers = new EventPatternCompiler().compile(patterns);
+		Map<EventType, List<EventPatternMatcher>> mapped = matchers.stream()
+				.collect(Collectors.groupingBy(EventPatternMatcher::getType));
+
 		matchers.forEach(System.out::println);
 
 		// Test with dummy class file
@@ -67,10 +73,18 @@ public class App {
 		}
 
 		if (data != null) {
-			ClassWriter cw = new ClassWriter(0);
-			ClassVisitor ca = new MonitorClassAdapter(Opcodes.ASM4, cw, matchers);
+			ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+			ClassVisitor ca = new MonitorClassAdapter(Opcodes.ASM4, cw, matchers, mapped);
 			ClassReader cr = new ClassReader(data);
-			cr.accept(ca, 0);
+			cr.accept(ca, ClassReader.EXPAND_FRAMES);
+
+			Path file = Paths.get("./bytecode_test/Example_instrumented.class");
+			try {
+				Files.write(file, cw.toByteArray());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 }

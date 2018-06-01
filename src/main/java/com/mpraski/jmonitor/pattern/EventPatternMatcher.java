@@ -3,6 +3,7 @@ package com.mpraski.jmonitor.pattern;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -15,6 +16,7 @@ public final class EventPatternMatcher {
 	private final List<Pattern> inPatternPositive, fromPatternPositive, ofPatternPositive;
 	private final List<Pattern> inPatternNegative, fromPatternNegative, ofPatternNegative;
 	private final Set<EventMonitor> monitors;
+	private final int hash;
 
 	public EventPatternMatcher(EventPatternTemporary t) {
 		this.tag = t.getTag();
@@ -26,6 +28,7 @@ public final class EventPatternMatcher {
 		this.fromPatternNegative = getPatterns(t.getFromPattern(), false);
 		this.ofPatternPositive = getPatterns(t.getOfPattern(), true);
 		this.ofPatternNegative = getPatterns(t.getOfPattern(), false);
+		this.hash = t.hashCode();
 	}
 
 	public boolean definesIn() {
@@ -78,28 +81,6 @@ public final class EventPatternMatcher {
 		return l;
 	}
 
-	@SuppressWarnings("unused")
-	private static Pattern getNegated(Map<String, Boolean> items) throws PatternSyntaxException {
-		StringBuilder sb = new StringBuilder();
-		sb.append("(?!");
-
-		for (Map.Entry<String, Boolean> e : items.entrySet()) {
-			if (!e.getValue()) {
-				sb.append("(");
-				sb.append(e.getKey());
-				sb.append(")|");
-			}
-		}
-
-		if (!items.isEmpty()) {
-			sb.setLength(sb.length() - 1);
-		}
-
-		sb.append(")");
-
-		return Pattern.compile(sb.toString());
-	}
-
 	public String getTag() {
 		return tag;
 	}
@@ -110,6 +91,31 @@ public final class EventPatternMatcher {
 
 	public Set<EventMonitor> getMonitors() {
 		return monitors;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (o == this) {
+			return true;
+		}
+
+		if (!(o instanceof EventPatternMatcher)) {
+			return false;
+		}
+
+		EventPatternMatcher c = (EventPatternMatcher) o;
+
+		return Objects.equals(type, c.getType()) && Objects.equals(inPatternPositive, c.inPatternPositive)
+				&& Objects.equals(fromPatternPositive, c.fromPatternPositive)
+				&& Objects.equals(ofPatternPositive, c.ofPatternPositive)
+				&& Objects.equals(inPatternNegative, c.inPatternNegative)
+				&& Objects.equals(fromPatternNegative, c.fromPatternNegative)
+				&& Objects.equals(ofPatternNegative, c.ofPatternNegative);
+	}
+
+	@Override
+	public int hashCode() {
+		return hash;
 	}
 
 	@Override

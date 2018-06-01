@@ -8,6 +8,7 @@ public class Example {
 		System.out.println("hello");
 	}
 
+
 	public String lol() {
 		return lel;
 	}
