@@ -15,7 +15,7 @@ public class ResolverWriter implements Opcodes {
 	private static final String monitorClass = "Lcom/mpraski/jmonitor/common/Monitor;";
 	private static final String insteadMonitorClass = "Lcom/mpraski/jmonitor/common/InsteadMonitor;";
 
-	public static byte[] write(List<EventMonitor> monitors) throws Exception {
+	public static byte[] write(List<EventMonitor> monitors) {
 
 		ClassWriter classWriter = new ClassWriter(0);
 		FieldVisitor fieldVisitor;
@@ -76,6 +76,6 @@ public class ResolverWriter implements Opcodes {
 	}
 
 	private static String toInternalType(String name) {
-		return name.replaceAll(".", "/");
+		return name.replaceAll("[.]", "/");
 	}
 }

@@ -6,11 +6,12 @@ import java.util.Map;
 
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import com.mpraski.jmonitor.event.EventType;
 import com.mpraski.jmonitor.pattern.EventPatternMatcher;
 
-public class MonitorClassAdapter extends ClassVisitor {
+public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 
 	private final List<EventPatternMatcher> matchers;
 	private final Map<EventType, List<EventPatternMatcher>> mapped;
@@ -18,9 +19,9 @@ public class MonitorClassAdapter extends ClassVisitor {
 
 	private String owner;
 
-	public MonitorClassAdapter(int api, ClassVisitor classVisitor, List<EventPatternMatcher> matchers,
+	public MonitorClassAdapter(ClassVisitor classVisitor, List<EventPatternMatcher> matchers,
 			Map<EventType, List<EventPatternMatcher>> mapped) {
-		super(api, classVisitor);
+		super(ASM4, classVisitor);
 
 		this.matchers = matchers;
 		this.mapped = mapped;
@@ -32,6 +33,8 @@ public class MonitorClassAdapter extends ClassVisitor {
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
 		this.owner = name;
+
+		cv.visit(version, access, name, signature, superName, interfaces);
 	}
 
 	@Override
@@ -39,7 +42,7 @@ public class MonitorClassAdapter extends ClassVisitor {
 		MethodVisitor mv = cv.visitMethod(access, name, desc, signature, exceptions);
 
 		if (mv != null)
-			mv = new MonitorMethodAdapter(api, owner, access, name, desc, mv, matchers, mapped, beforeMonitors,
+			mv = new MonitorMethodAdapter(owner, access, name, desc, mv, matchers, mapped, beforeMonitors,
 					afterMonitors, insteadMonitors);
 
 		return mv;

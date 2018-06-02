@@ -1,6 +1,9 @@
-package com.mpraski.jmonitor.common;
+package com.mpraski.jmonitor;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -12,48 +15,31 @@ import java.util.stream.Collectors;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.util.TraceClassVisitor;
 
 import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
+import com.mpraski.jmonitor.common.MonitorClassLoader;
 import com.mpraski.jmonitor.event.EventType;
 import com.mpraski.jmonitor.pattern.EventPattern;
 import com.mpraski.jmonitor.pattern.EventPatternCompiler;
 import com.mpraski.jmonitor.pattern.EventPatternMatcher;
 
-public class App {
+public class TestDriver {
 	public static void main(String[] args) {
-		// Dummy event patterns
-		EventPattern p = EventPattern.onMethodCall().of("sdsd").doBefore("wolololo");
+		new TestDriver().run();
+	}
 
-		EventPattern p3 = p.not().doInstead("sdsdsdll");
+	public void run() {
+		MonitorClassLoader cl = new MonitorClassLoader(getClass().getClassLoader(),
+				"com.mpraski.jmonitor.TestDefinitions");
 
-		EventPattern p1 = EventPattern.onFieldRead().of("sdsd").from("a").doAfter("mrart");
-
-		EventPattern p12 = EventPattern.onFieldRead().of("sdsd").from("b").not();
-
-		EventPattern p2 = p.or(p1).from("testing").doAfter("asd");
-
-		EventPattern p5 = EventPattern.onArrayCreated().of("dsds")
-				.or(EventPattern.onFieldRead().of("sds").or(EventPattern.onFieldWrite().of("sdsd"))).from("testing")
-				.doAfter("asd");
-
-		EventPattern p6 = p1.and(p12).doAfter("asdas");
-
-		EventPattern p7 = EventPattern.onAnyEvent().of("sdsd").and(EventPattern.onAnyEvent().from("sdsd"))
-				.and(EventPattern.onFieldRead().in("sdsdsd")).doAfter("wolo wolo").doBefore("why nut");
-
-		EventPattern p8 = p1.excluding(EventPattern.onAnyEvent().in("c")).doBefore("asdasd");
+		Thread.currentThread().setContextClassLoader(cl);
 
 		EventPattern p9 = EventPattern.onFieldRead().of("lel").from("lol").doBefore("monitor_1");
 
 		final List<EventPattern> patterns = new ArrayList<>();
-		// patterns.add(p);
-		// patterns.add(p1);
-		// patterns.add(p2);
-		// patterns.add(p3);
-		// patterns.add(p5);
 		patterns.add(p9);
 
-		// Compile and print
 		EventPatternCompiler c = new EventPatternCompiler();
 		c.compile(patterns);
 
@@ -61,9 +47,6 @@ public class App {
 		Map<EventType, List<EventPatternMatcher>> mapped = matchers.stream()
 				.collect(Collectors.groupingBy(EventPatternMatcher::getType));
 
-		matchers.forEach(System.out::println);
-
-		// Test with dummy class file
 		Path path = Paths.get("./bytecode_test/Example.class");
 		byte[] data = null;
 
@@ -75,18 +58,36 @@ public class App {
 		}
 
 		if (data != null) {
+			PrintWriter writer = new PrintWriter(System.out);
+
 			ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-			ClassVisitor ca = new MonitorClassAdapter(cw, matchers, mapped);
+			TraceClassVisitor tcw = new TraceClassVisitor(cw, writer);
+			ClassVisitor ca = new MonitorClassAdapter(tcw, matchers, mapped);
+
 			ClassReader cr = new ClassReader(data);
 			cr.accept(ca, ClassReader.EXPAND_FRAMES);
 
-			Path file = Paths.get("./bytecode_test/Example.class");
+			Class testClass = cl.defineClass("bytecode_test.Example", cw.toByteArray());
+
+			Method meth;
 			try {
-				Files.write(file, cw.toByteArray());
-			} catch (IOException e) {
+				meth = testClass.getMethod("main", String[].class);
+				String[] params = null;
+				meth.invoke(null, (Object) params);
+			} catch (NoSuchMethodException | SecurityException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalArgumentException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InvocationTargetException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+
 		}
 	}
 }

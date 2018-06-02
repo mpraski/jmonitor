@@ -26,7 +26,7 @@ public final class EventMonitor implements Comparable<EventMonitor> {
 	}
 
 	public String getFieldName() {
-		return monitor.replaceAll(".", "");
+		return monitor.replaceAll("[.]", "");
 	}
 
 	@Override

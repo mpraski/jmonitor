@@ -26,10 +26,10 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	private final List<EventData> beforeMonitors, afterMonitors, insteadMonitors;
 
-	protected MonitorMethodAdapter(int api, String owner, int access, String name, String desc, MethodVisitor mv,
+	protected MonitorMethodAdapter(String owner, int access, String name, String desc, MethodVisitor mv,
 			List<EventPatternMatcher> matchers, Map<EventType, List<EventPatternMatcher>> mapped,
 			List<EventData> beforeMonitors, List<EventData> afterMonitors, List<EventData> insteadMonitors) {
-		super(api, owner, access, name, desc, mv);
+		super(ASM4, owner, access, name, desc, mv);
 
 		this.thisName = name;
 		this.thisDesc = desc;
@@ -114,6 +114,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	@Override
 	public void visitVarInsn(int opcode, int var) {
+		resetMonitors();
 
 		switch (opcode) {
 		case ILOAD:
@@ -135,6 +136,8 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	@Override
 	public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
+		resetMonitors();
+
 		localNames.put(index, new LocalVariable(name, desc, signature));
 
 		super.visitLocalVariable(name, desc, signature, start, end, index);
@@ -142,6 +145,8 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	@Override
 	public void visitTypeInsn(int opcode, String desc) {
+		resetMonitors();
+
 		switch (opcode) {
 		case NEW:
 			tryMatch(EventType.INSTANCE, desc, null, null, null);
@@ -156,6 +161,8 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	@Override
 	public void visitIincInsn(int var, int increment) {
+		resetMonitors();
+
 		if (localNames.containsKey(var)) {
 
 		}
@@ -165,11 +172,15 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	@Override
 	public void visitInvokeDynamicInsn(String name, String desc, Handle bsm, Object... bsmArgs) {
+		resetMonitors();
+
 		super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
 	}
 
 	@Override
 	public void visitMethodInsn(int opc, String owner, String name, String desc, boolean isInterface) {
+		resetMonitors();
+
 		super.visitMethodInsn(opc, owner, name, desc, isInterface);
 	}
 
@@ -300,7 +311,9 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	private void generateFieldRead(EventData e) {
+		System.out.println("Called for eventdata: " + e);
 		visitEventStart(e.getTag(), e.getType(), e.getSignature());
+		super.visitVarInsn(ALOAD, 0);
 		super.visitFieldInsn(GETFIELD, e.getOwner(), e.getName(), e.getDesc());
 		autobox(e.getDesc());
 		super.visitInsn(ACONST_NULL);

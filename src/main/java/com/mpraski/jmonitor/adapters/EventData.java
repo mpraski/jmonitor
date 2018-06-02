@@ -1,5 +1,7 @@
 package com.mpraski.jmonitor.adapters;
 
+import java.util.Objects;
+
 import com.mpraski.jmonitor.event.EventType;
 
 public final class EventData {
@@ -55,5 +57,13 @@ public final class EventData {
 
 	public String getOwner() {
 		return owner;
+	}
+
+	@Override
+	public String toString() {
+		return "Type: '" + this.type + "', Tag: '" + Objects.toString(tag, "null") + "', Signature: '"
+				+ Objects.toString(signature, "null") + "', Monitor: '" + Objects.toString(monitor, "null")
+				+ "', Name: '" + Objects.toString(name, "null") + "', Desc: '" + Objects.toString(desc, "null")
+				+ "', Owner: '" + Objects.toString(owner, "null") + "'";
 	}
 }

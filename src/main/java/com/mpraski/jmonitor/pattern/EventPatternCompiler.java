@@ -1,7 +1,6 @@
 package com.mpraski.jmonitor.pattern;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -13,9 +12,11 @@ import com.mpraski.jmonitor.event.EventType;
 
 public final class EventPatternCompiler {
 	private final Set<EventPatternTemporary> matchers = new HashSet<>();
+	private final Set<EventMonitor> monitors = new HashSet<>();
 
-	public List<EventPatternTemporary> compile__(List<EventPattern> patterns) {
+	public void compile(List<EventPattern> patterns) {
 		matchers.clear();
+		monitors.clear();
 
 		final List<EventPatternTemporary> temp = new ArrayList<>();
 
@@ -23,21 +24,14 @@ public final class EventPatternCompiler {
 			_compile(temp, p);
 			temp.clear();
 		}
-
-		return new ArrayList<>(matchers);
 	}
 
-	public List<EventPatternMatcher> compile(List<EventPattern> patterns) {
-		matchers.clear();
-
-		final List<EventPatternTemporary> temp = new ArrayList<>();
-
-		for (EventPattern p : patterns) {
-			_compile(temp, p);
-			temp.clear();
-		}
-
+	public List<EventPatternMatcher> getMatchers() {
 		return matchers.stream().map(EventPatternMatcher::new).collect(Collectors.toList());
+	}
+
+	public List<EventMonitor> getMonitors() {
+		return new ArrayList<>(monitors);
 	}
 
 	private void _compile(List<EventPatternTemporary> temp, EventPattern p) {
@@ -54,9 +48,8 @@ public final class EventPatternCompiler {
 		default:
 			EventPatternTemporary e = new EventPatternTemporary(p);
 
-			if (e.hasMonitors()) {
+			if (e.hasMonitors())
 				addMatchers(e);
-			}
 
 			temp.add(e);
 		}
@@ -66,8 +59,9 @@ public final class EventPatternCompiler {
 		temp.stream().filter(EventPatternTemporary::hasMonitors).forEach(matchers::add);
 	}
 
-	private void addMatchers(EventPatternTemporary... temp) {
-		matchers.addAll(Arrays.asList(temp));
+	private void addMatchers(EventPatternTemporary temp) {
+		matchers.add(temp);
+		monitors.addAll(temp.getMonitors());
 	}
 
 	private void addMonitor(List<EventPatternTemporary> temp, EventPattern p) {
@@ -76,6 +70,10 @@ public final class EventPatternCompiler {
 			m.addMonitor(p.getAfterMonitor());
 			m.addMonitor(p.getInsteadMonitor());
 		}
+
+		monitors.add(p.getBeforeMonitor());
+		monitors.add(p.getAfterMonitor());
+		monitors.add(p.getInsteadMonitor());
 	}
 
 	private void compileOrPattern(List<EventPatternTemporary> temp, EventPattern p) {
