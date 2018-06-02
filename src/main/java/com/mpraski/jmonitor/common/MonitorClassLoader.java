@@ -30,7 +30,6 @@ public final class MonitorClassLoader extends ClassLoader {
 	private final Map<EventType, List<EventPatternMatcher>> mapped;
 
 	private final static String RESOLVER_CLASS = "com.mpraski.jmonitor.common.Resolver";
-	private final Class resolverClass;
 
 	public MonitorClassLoader(ClassLoader parent, String definitionsName) {
 		super(parent);
@@ -55,9 +54,7 @@ public final class MonitorClassLoader extends ClassLoader {
 		if (resolverBytes == null)
 			throw new NullPointerException("Could not generate Resolver class");
 
-		resolverClass = defineClass(RESOLVER_CLASS, resolverBytes);
-
-		if (resolverClass == null)
+		if (defineClass(RESOLVER_CLASS, resolverBytes) == null)
 			throw new NullPointerException("Could not define Resolver class");
 	}
 
@@ -98,10 +95,6 @@ public final class MonitorClassLoader extends ClassLoader {
 	@Override
 	protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
 		if (name.startsWith("java") || name.startsWith("com.mpraski.jmonitor")) {
-			if (name.equals(RESOLVER_CLASS)) {
-				return resolverClass;
-			}
-
 			return super.loadClass(name, resolve);
 		}
 
@@ -115,7 +108,7 @@ public final class MonitorClassLoader extends ClassLoader {
 			byte[] classBytes;
 			InputStream is = null;
 			try {
-				is = getResourceAsStream(name);
+				is = getResourceAsStream(name.replace('.', '/') + ".class");
 				classBytes = new byte[is.available()];
 				is.read(classBytes);
 
@@ -140,9 +133,8 @@ public final class MonitorClassLoader extends ClassLoader {
 					}
 			}
 
-			if (resolve) {
+			if (resolve)
 				resolveClass(clazz);
-			}
 
 			transformedClasses.put(name, clazz);
 

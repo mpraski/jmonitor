@@ -29,7 +29,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	protected MonitorMethodAdapter(String owner, int access, String name, String desc, MethodVisitor mv,
 			List<EventPatternMatcher> matchers, Map<EventType, List<EventPatternMatcher>> mapped,
 			List<EventData> beforeMonitors, List<EventData> afterMonitors, List<EventData> insteadMonitors) {
-		super(ASM4, owner, access, name, desc, mv);
+		super(ASM5, owner, access, name, desc, mv);
 
 		this.thisName = name;
 		this.thisDesc = desc;
@@ -218,7 +218,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	private void addMonitors(EventPatternMatcher e) {
 		for (EventMonitor m : e.getMonitors()) {
-			EventData d = new EventData(e.getType(), e.getTag(), null, m.getMonitor());
+			EventData d = new EventData(e.getType(), e.getTag(), null, m.getFieldName());
 			switch (m.getOrder()) {
 			case BEFORE:
 				beforeMonitors.add(d);
@@ -235,7 +235,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	private void addMonitors(EventPatternMatcher e, String signature, String name, String desc, String owner) {
 		for (EventMonitor m : e.getMonitors()) {
-			EventData d = new EventData(e.getType(), e.getTag(), signature, m.getMonitor(), name, desc, owner);
+			EventData d = new EventData(e.getType(), e.getTag(), signature, m.getFieldName(), name, desc, owner);
 			switch (m.getOrder()) {
 			case BEFORE:
 				beforeMonitors.add(d);
@@ -311,8 +311,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	private void generateFieldRead(EventData e) {
-		System.out.println("Called for eventdata: " + e);
-		visitEventStart(e.getTag(), e.getType(), e.getSignature());
+		visitEventStart(e.getTag(), e.getType(), e.getMonitor(), e.getSignature());
 		super.visitVarInsn(ALOAD, 0);
 		super.visitFieldInsn(GETFIELD, e.getOwner(), e.getName(), e.getDesc());
 		autobox(e.getDesc());
@@ -320,7 +319,9 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		visitEventEnd();
 	}
 
-	private void visitEventStart(String tag, EventType type, String signature) {
+	private void visitEventStart(String tag, EventType type, String monitor, String signature) {
+		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/common/Resolver", monitor,
+				"Lcom/mpraski/jmonitor/common/Monitor;");
 		super.visitTypeInsn(NEW, "com/mpraski/jmonitor/event/Event");
 		super.visitInsn(DUP);
 		super.visitLdcInsn(tag == null ? "" : tag);
@@ -336,6 +337,8 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		super.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/event/Event", "<init>",
 				"(Ljava/lang/String;Lcom/mpraski/jmonitor/event/EventType;Ljava/lang/String;Ljava/lang/Object;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
 				false);
+		super.visitMethodInsn(INVOKEINTERFACE, "com/mpraski/jmonitor/common/Monitor", "onEvent",
+				"(Lcom/mpraski/jmonitor/event/Event;)V", true);
 	}
 
 	private void visitNewArray() {

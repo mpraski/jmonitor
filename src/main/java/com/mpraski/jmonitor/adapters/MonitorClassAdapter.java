@@ -21,7 +21,7 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 
 	public MonitorClassAdapter(ClassVisitor classVisitor, List<EventPatternMatcher> matchers,
 			Map<EventType, List<EventPatternMatcher>> mapped) {
-		super(ASM4, classVisitor);
+		super(ASM5, classVisitor);
 
 		this.matchers = matchers;
 		this.mapped = mapped;

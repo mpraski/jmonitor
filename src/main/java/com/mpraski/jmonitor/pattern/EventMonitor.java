@@ -5,15 +5,18 @@ import java.util.Objects;
 
 public final class EventMonitor implements Comparable<EventMonitor> {
 	private final String monitor;
+	private final String fieldName;
 	private final EventOrder order;
 
 	public EventMonitor(String monitor, EventOrder order) {
 		this.monitor = monitor;
+		this.fieldName = monitor.replace(".", "");
 		this.order = order;
 	}
 
 	private EventMonitor(EventMonitor e) {
 		this.monitor = e.monitor;
+		this.fieldName = e.fieldName;
 		this.order = e.order;
 	}
 
@@ -26,7 +29,7 @@ public final class EventMonitor implements Comparable<EventMonitor> {
 	}
 
 	public String getFieldName() {
-		return monitor.replaceAll("[.]", "");
+		return fieldName;
 	}
 
 	@Override

@@ -8,6 +8,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import com.mpraski.jmonitor.event.Event;
 import com.mpraski.jmonitor.pattern.EventMonitor;
 import com.mpraski.jmonitor.pattern.EventOrder;
 
@@ -49,7 +50,6 @@ public class ResolverWriter implements Opcodes {
 
 			fieldVisitor = classWriter.visitField(ACC_PUBLIC | ACC_FINAL | ACC_STATIC, fieldName, mClass, null, null);
 			fieldVisitor.visitEnd();
-
 		}
 
 		methodVisitor = classWriter.visitMethod(ACC_STATIC, "<clinit>", "()V", null, null);
@@ -76,6 +76,6 @@ public class ResolverWriter implements Opcodes {
 	}
 
 	private static String toInternalType(String name) {
-		return name.replaceAll("[.]", "/");
+		return name.replace('.', '/');
 	}
 }
