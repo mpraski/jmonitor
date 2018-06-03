@@ -18,7 +18,7 @@ public class TestDriver {
 
 		Class loaded = null;
 		try {
-			loaded = cl.loadClass("com.mpraski.dummy.Example");
+			loaded = cl.loadClass("com.mpraski.dummy.Dummy");
 		} catch (ClassNotFoundException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();

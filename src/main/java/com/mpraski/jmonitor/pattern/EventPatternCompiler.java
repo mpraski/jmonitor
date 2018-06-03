@@ -15,9 +15,6 @@ public final class EventPatternCompiler {
 	private final Set<EventMonitor> monitors = new HashSet<>();
 
 	public void compile(List<EventPattern> patterns) {
-		matchers.clear();
-		monitors.clear();
-
 		final List<EventPatternTemporary> temp = new ArrayList<>();
 
 		for (EventPattern p : patterns) {
@@ -30,8 +27,13 @@ public final class EventPatternCompiler {
 		return matchers.stream().map(EventPatternMatcher::new).collect(Collectors.toList());
 	}
 
-	public List<EventMonitor> getMonitors() {
-		return new ArrayList<>(monitors);
+	public Set<EventMonitor> getMonitors() {
+		return monitors;
+	}
+
+	public void clear() {
+		matchers.clear();
+		monitors.clear();
 	}
 
 	private void _compile(List<EventPatternTemporary> temp, EventPattern p) {
@@ -154,7 +156,7 @@ public final class EventPatternCompiler {
 	}
 
 	private void negate(List<EventPatternTemporary> result) {
-		result.replaceAll(t -> t.negate());
+		result.replaceAll(EventPatternTemporary::negate);
 	}
 
 	private EventType getAndType(List<EventPatternTemporary> temp) {

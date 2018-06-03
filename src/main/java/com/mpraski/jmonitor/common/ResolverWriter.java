@@ -1,6 +1,7 @@
 package com.mpraski.jmonitor.common;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
@@ -8,7 +9,6 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import com.mpraski.jmonitor.event.Event;
 import com.mpraski.jmonitor.pattern.EventMonitor;
 import com.mpraski.jmonitor.pattern.EventOrder;
 
@@ -16,7 +16,8 @@ public class ResolverWriter implements Opcodes {
 	private static final String monitorClass = "Lcom/mpraski/jmonitor/common/Monitor;";
 	private static final String insteadMonitorClass = "Lcom/mpraski/jmonitor/common/InsteadMonitor;";
 
-	public static byte[] write(List<EventMonitor> monitors) {
+	public static byte[] write(Set<EventMonitor> monitors) {
+		Set<String> processed = new HashSet<>(monitors.size());
 
 		ClassWriter classWriter = new ClassWriter(0);
 		FieldVisitor fieldVisitor;
@@ -45,6 +46,10 @@ public class ResolverWriter implements Opcodes {
 		String internalName;
 
 		for (EventMonitor m : monitors) {
+			if (processed.contains(m.getMonitor()))
+				continue;
+			processed.add(m.getMonitor());
+
 			fieldName = m.getFieldName();
 			mClass = m.getOrder() == EventOrder.INSTEAD ? insteadMonitorClass : monitorClass;
 
@@ -55,7 +60,13 @@ public class ResolverWriter implements Opcodes {
 		methodVisitor = classWriter.visitMethod(ACC_STATIC, "<clinit>", "()V", null, null);
 		methodVisitor.visitCode();
 
+		processed.clear();
+
 		for (EventMonitor m : monitors) {
+			if (processed.contains(m.getMonitor()))
+				continue;
+			processed.add(m.getMonitor());
+
 			mClass = m.getOrder() == EventOrder.INSTEAD ? insteadMonitorClass : monitorClass;
 			internalName = toInternalType(m.getMonitor());
 			fieldName = m.getFieldName();

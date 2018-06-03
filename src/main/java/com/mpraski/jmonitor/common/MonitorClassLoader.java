@@ -45,7 +45,7 @@ public final class MonitorClassLoader extends ClassLoader {
 			throw new NullPointerException("Instance of EventPatternDefinitions is null");
 
 		this.compiler = new EventPatternCompiler();
-		this.compiler.compile(defInstance.getEventPatterns());
+		compiler.compile(defInstance.getEventPatterns());
 
 		this.matchers = compiler.getMatchers();
 		this.mapped = matchers.stream().collect(Collectors.groupingBy(EventPatternMatcher::getType));
@@ -56,6 +56,8 @@ public final class MonitorClassLoader extends ClassLoader {
 
 		if (defineClass(RESOLVER_CLASS, resolverBytes) == null)
 			throw new NullPointerException("Could not define Resolver class");
+
+		compiler.clear();
 	}
 
 	private Object getLockForName(String name) {
@@ -64,6 +66,7 @@ public final class MonitorClassLoader extends ClassLoader {
 
 	private <T> T instantiateClassOfType(Class<T> clazz) {
 		T t = null;
+
 		try {
 			t = clazz.newInstance();
 		} catch (InstantiationException | IllegalAccessException e) {
@@ -88,7 +91,7 @@ public final class MonitorClassLoader extends ClassLoader {
 		return clazz;
 	}
 
-	public Class defineClass(String name, byte[] b) {
+	private Class defineClass(String name, byte[] b) {
 		return defineClass(name, b, 0, b.length);
 	}
 
@@ -105,11 +108,8 @@ public final class MonitorClassLoader extends ClassLoader {
 				return clazz;
 			}
 
-			byte[] classBytes;
-			InputStream is = null;
-			try {
-				is = getResourceAsStream(name.replace('.', '/') + ".class");
-				classBytes = new byte[is.available()];
+			try (InputStream is = getResourceAsStream(name.replace('.', '/') + ".class")) {
+				byte[] classBytes = new byte[is.available()];
 				is.read(classBytes);
 
 				ClassReader cr = new ClassReader(classBytes);
@@ -124,13 +124,6 @@ public final class MonitorClassLoader extends ClassLoader {
 			} catch (ClassFormatError e) {
 				System.err.println("Error: Invalid definitions class " + name);
 				e.printStackTrace();
-			} finally {
-				if (is != null)
-					try {
-						is.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
 			}
 
 			if (resolve)

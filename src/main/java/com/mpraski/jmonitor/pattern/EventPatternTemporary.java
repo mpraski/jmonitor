@@ -171,7 +171,7 @@ public final class EventPatternTemporary {
 	}
 
 	private static Map<String, Boolean> copyNegated(Map<String, Boolean> in) {
-		Map<String, Boolean> m = new HashMap<>();
+		Map<String, Boolean> m = new HashMap<>(in.size());
 		in.forEach((k, v) -> m.put(k, !v));
 
 		return m;

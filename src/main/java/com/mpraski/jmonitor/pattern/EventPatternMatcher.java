@@ -6,79 +6,106 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 import com.mpraski.jmonitor.event.EventType;
 
 public final class EventPatternMatcher {
 	private final String tag;
 	private final EventType type;
-	private final List<Pattern> inPatternPositive, fromPatternPositive, ofPatternPositive;
-	private final List<Pattern> inPatternNegative, fromPatternNegative, ofPatternNegative;
 	private final Set<EventMonitor> monitors;
+
+	private final List<Pattern> inPatternPositive, fromPatternPositive, ofPatternPositive;
+	private final Pattern inPatternNegative, fromPatternNegative, ofPatternNegative;
+
 	private final int hash;
 
 	public EventPatternMatcher(EventPatternTemporary t) {
 		this.tag = t.getTag();
 		this.type = t.getType();
 		this.monitors = t.getMonitors();
-		this.inPatternPositive = getPatterns(t.getInPattern(), true);
-		this.inPatternNegative = getPatterns(t.getInPattern(), false);
-		this.fromPatternPositive = getPatterns(t.getFromPattern(), true);
-		this.fromPatternNegative = getPatterns(t.getFromPattern(), false);
-		this.ofPatternPositive = getPatterns(t.getOfPattern(), true);
-		this.ofPatternNegative = getPatterns(t.getOfPattern(), false);
-		this.hash = t.hashCode();
-	}
 
-	public boolean definesIn() {
-		return !(inPatternPositive.isEmpty() && inPatternNegative.isEmpty());
-	}
+		this.inPatternPositive = new ArrayList<>();
+		this.fromPatternPositive = new ArrayList<>();
+		this.ofPatternPositive = new ArrayList<>();
 
-	public boolean definesFrom() {
-		return !(fromPatternPositive.isEmpty() && fromPatternNegative.isEmpty());
-	}
+		final StringBuilder sb = new StringBuilder();
 
-	public boolean definesOf() {
-		return !(ofPatternPositive.isEmpty() && ofPatternNegative.isEmpty());
-	}
-
-	public boolean matchesIn(String s) {
-		if (definesIn())
-			return matches(inPatternPositive, inPatternNegative, s);
-
-		return true;
-	}
-
-	public boolean matchesFrom(String s) {
-		if (definesFrom())
-			return matches(fromPatternPositive, fromPatternNegative, s);
-
-		return true;
-	}
-
-	public boolean matchesOf(String s) {
-		if (definesOf())
-			return matches(ofPatternPositive, ofPatternNegative, s);
-
-		return true;
-	}
-
-	private boolean matches(List<Pattern> listPos, List<Pattern> listNeg, String s) {
-		return listPos.stream().allMatch(p -> p.matcher(s).matches())
-				&& listNeg.stream().noneMatch(p -> p.matcher(s).matches());
-	}
-
-	private static List<Pattern> getPatterns(Map<String, Boolean> items, boolean sign) throws PatternSyntaxException {
-		List<Pattern> l = new ArrayList<>();
-
-		for (Map.Entry<String, Boolean> e : items.entrySet()) {
-			if (sign == e.getValue()) {
-				l.add(Pattern.compile(e.getKey()));
+		for (Map.Entry<String, Boolean> e : t.getInPattern().entrySet()) {
+			if (e.getValue()) {
+				inPatternPositive.add(Pattern.compile(e.getKey()));
+			} else {
+				sb.append("(");
+				sb.append(e.getKey());
+				sb.append(")|");
 			}
 		}
 
-		return l;
+		if (sb.length() == 0) {
+			this.inPatternNegative = null;
+		} else {
+			sb.setLength(sb.length() - 1);
+			this.inPatternNegative = Pattern.compile(sb.toString());
+		}
+
+		sb.setLength(0);
+
+		for (Map.Entry<String, Boolean> e : t.getFromPattern().entrySet()) {
+			if (e.getValue()) {
+				fromPatternPositive.add(Pattern.compile(e.getKey()));
+			} else {
+				sb.append("(");
+				sb.append(e.getKey());
+				sb.append(")|");
+			}
+		}
+
+		if (sb.length() == 0) {
+			this.fromPatternNegative = null;
+		} else {
+			sb.setLength(sb.length() - 1);
+			this.fromPatternNegative = Pattern.compile(sb.toString());
+		}
+
+		sb.setLength(0);
+
+		for (Map.Entry<String, Boolean> e : t.getOfPattern().entrySet()) {
+			if (e.getValue()) {
+				ofPatternPositive.add(Pattern.compile(e.getKey()));
+			} else {
+				sb.append("(");
+				sb.append(e.getKey());
+				sb.append(")|");
+			}
+		}
+
+		if (sb.length() == 0) {
+			this.ofPatternNegative = null;
+		} else {
+			sb.setLength(sb.length() - 1);
+			this.ofPatternNegative = Pattern.compile(sb.toString());
+		}
+
+		sb.setLength(0);
+
+		this.hash = t.hashCode();
+	}
+
+	public boolean matchesIn(String s) {
+		return (inPatternNegative == null ? true : inPatternNegative.matcher(s).matches())
+				&& (inPatternPositive.isEmpty() ? true
+						: inPatternPositive.stream().allMatch(p -> p.matcher(s).matches()));
+	}
+
+	public boolean matchesFrom(String s) {
+		return (fromPatternNegative == null ? true : fromPatternNegative.matcher(s).matches())
+				&& (fromPatternPositive.isEmpty() ? true
+						: fromPatternPositive.stream().allMatch(p -> p.matcher(s).matches()));
+	}
+
+	public boolean matchesOf(String s) {
+		return (ofPatternNegative == null ? true : ofPatternNegative.matcher(s).matches())
+				&& (ofPatternPositive.isEmpty() ? true
+						: ofPatternPositive.stream().allMatch(p -> p.matcher(s).matches()));
 	}
 
 	public String getTag() {

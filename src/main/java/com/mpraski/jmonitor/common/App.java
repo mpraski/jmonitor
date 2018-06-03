@@ -14,7 +14,6 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 
 import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
-import com.mpraski.jmonitor.event.Event;
 import com.mpraski.jmonitor.event.EventType;
 import com.mpraski.jmonitor.pattern.EventPattern;
 import com.mpraski.jmonitor.pattern.EventPatternCompiler;

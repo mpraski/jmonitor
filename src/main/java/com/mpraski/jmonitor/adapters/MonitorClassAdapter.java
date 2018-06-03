@@ -1,6 +1,7 @@
 package com.mpraski.jmonitor.adapters;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,6 +16,7 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 
 	private final List<EventPatternMatcher> matchers;
 	private final Map<EventType, List<EventPatternMatcher>> mapped;
+	private final Map<EventPatternMatcher, Boolean> matchesFrom;
 	private final List<EventData> beforeMonitors, afterMonitors, insteadMonitors;
 
 	private String owner;
@@ -25,6 +27,7 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 
 		this.matchers = matchers;
 		this.mapped = mapped;
+		this.matchesFrom = new HashMap<>(matchers.size());
 		this.beforeMonitors = new ArrayList<>();
 		this.afterMonitors = new ArrayList<>();
 		this.insteadMonitors = new ArrayList<>();
@@ -33,7 +36,6 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
 		this.owner = name;
-
 		cv.visit(version, access, name, signature, superName, interfaces);
 	}
 
@@ -42,7 +44,7 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 		MethodVisitor mv = cv.visitMethod(access, name, desc, signature, exceptions);
 
 		if (mv != null)
-			mv = new MonitorMethodAdapter(owner, access, name, desc, mv, matchers, mapped, beforeMonitors,
+			mv = new MonitorMethodAdapter(owner, access, name, desc, mv, matchers, mapped, matchesFrom, beforeMonitors,
 					afterMonitors, insteadMonitors);
 
 		return mv;

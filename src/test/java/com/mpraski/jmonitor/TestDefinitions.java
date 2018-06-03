@@ -10,10 +10,13 @@ public class TestDefinitions implements EventPatternDefinitions {
 
 	@Override
 	public List<EventPattern> getEventPatterns() {
-		EventPattern p9 = EventPattern.onFieldRead().of("lel").from("lol").doBefore("com.mpraski.dummy.DummyMonitor");
+		EventPattern p = EventPattern.onFieldRead().of("lel").from("lol").doBefore("com.mpraski.dummy.DummyMonitor");
+		EventPattern p2 = EventPattern.onFieldRead().of("lilp").from("l(.*)p")
+				.doAfter("com.mpraski.dummy.DummyMonitor2").doBefore("com.mpraski.dummy.DummyMonitor2");
 
 		final List<EventPattern> patterns = new ArrayList<>();
-		patterns.add(p9);
+		patterns.add(p);
+		patterns.add(p2);
 
 		return patterns;
 	}

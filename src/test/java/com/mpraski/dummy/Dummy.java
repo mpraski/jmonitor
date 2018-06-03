@@ -1,11 +1,14 @@
 package com.mpraski.dummy;
 
-public class Example {
+public class Dummy {
 	private String lel = "lel";
 	private int lilp = 1;
 
 	public static void main(String[] args) {
-		System.out.println(new Example().lol());
+		Dummy d = new Dummy();
+		System.out.println(d.lol());
+		System.out.println("Now printing...");
+		System.out.println(d.lil());
 	}
 
 	public void sayHello() {
