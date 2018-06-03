@@ -1,9 +1,8 @@
 package com.mpraski.jmonitor.pattern;
 
-import java.util.Comparator;
 import java.util.Objects;
 
-public final class EventMonitor implements Comparable<EventMonitor> {
+public final class EventMonitor implements Cloneable {
 	private final String monitor;
 	private final String fieldName;
 	private final EventOrder order;
@@ -59,11 +58,8 @@ public final class EventMonitor implements Comparable<EventMonitor> {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(monitor, order);
-	}
-
-	@Override
-	public int compareTo(EventMonitor o) {
-		return Comparator.comparing(EventMonitor::getMonitor).thenComparing(EventMonitor::getOrder).compare(this, o);
+		int result = monitor.hashCode();
+		result = 31 * result + Objects.hashCode(order);
+		return result;
 	}
 }

@@ -37,7 +37,9 @@ public final class Pair<K extends Comparable<K>, V extends Comparable<V>> implem
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(key, value);
+		int result = Objects.hashCode(key);
+		result = 31 * result + Objects.hashCode(value);
+		return result;
 	}
 
 	@Override

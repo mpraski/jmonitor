@@ -8,7 +8,7 @@ import java.util.Set;
 
 import com.mpraski.jmonitor.event.EventType;
 
-public final class EventPatternTemporary {
+public final class EventPatternTemporary implements Cloneable {
 	private final String tag;
 	private final EventType type;
 
@@ -130,7 +130,11 @@ public final class EventPatternTemporary {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(type, inPattern, fromPattern, ofPattern);
+		int result = Objects.hashCode(type);
+		result = 31 * result + Objects.hashCode(inPattern);
+		result = 31 * result + Objects.hashCode(fromPattern);
+		result = 31 * result + Objects.hashCode(ofPattern);
+		return result;
 	}
 
 	public Map<String, Boolean> getInPattern() {

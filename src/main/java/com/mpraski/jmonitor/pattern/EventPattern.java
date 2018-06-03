@@ -4,7 +4,7 @@ import java.util.Objects;
 
 import com.mpraski.jmonitor.event.EventType;
 
-public final class EventPattern {
+public final class EventPattern implements Cloneable {
 	private String tag;
 	private String of, from, in;
 	private EventMonitor beforeMonitor, afterMonitor, insteadMonitor;
