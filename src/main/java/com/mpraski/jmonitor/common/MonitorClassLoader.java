@@ -51,9 +51,10 @@ public final class MonitorClassLoader extends ClassLoader {
 		this.matchers = compiler.getMatchers();
 		this.mapped = new EnumMap<>(EventType.class);
 
-		for (EventPatternMatcher m : matchers) {
-			mapped.computeIfAbsent(m.getType(), k -> new ArrayList<>()).add(m);
-		}
+		for (EventType t : EventType.values())
+			mapped.put(t, new ArrayList<>());
+		for (EventPatternMatcher m : matchers)
+			mapped.get(m.getType()).add(m);
 
 		byte[] resolverBytes = ResolverWriter.write(compiler.getMonitors());
 		if (resolverBytes == null)

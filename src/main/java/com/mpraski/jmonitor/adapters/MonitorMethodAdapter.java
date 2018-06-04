@@ -1,6 +1,5 @@
 package com.mpraski.jmonitor.adapters;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -42,9 +41,9 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		this.matchesFrom = matchesFrom;
 
 		matchesFrom.clear();
-		for (EventPatternMatcher m : matchers) {
+
+		for (EventPatternMatcher m : matchers)
 			matchesFrom.put(m, m.matchesFrom(thisName));
-		}
 
 		this.beforeMonitors = beforeMonitors;
 		this.afterMonitors = afterMonitors;
@@ -198,27 +197,21 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	private void tryMatch(EventType type) {
-		for (EventPatternMatcher m : getMatchers(type)) {
+		for (EventPatternMatcher m : mapped.get(type))
 			if (matchesFrom.get(m))
 				addMonitors(m);
-		}
 	}
 
 	private void tryMatch(EventType type, String of, String name, String desc, String owner) {
-		for (EventPatternMatcher m : getMatchers(type)) {
+		for (EventPatternMatcher m : mapped.get(type))
 			if (matchesFrom.get(m) && m.matchesOf(of))
 				addMonitors(m, of, name, desc, owner);
-		}
 	}
 
 	private void resetMonitors() {
 		beforeMonitors.clear();
 		afterMonitors.clear();
 		insteadMonitors.clear();
-	}
-
-	private List<EventPatternMatcher> getMatchers(EventType type) {
-		return mapped.getOrDefault(type, Collections.<EventPatternMatcher>emptyList());
 	}
 
 	private void addMonitors(EventPatternMatcher e) {
