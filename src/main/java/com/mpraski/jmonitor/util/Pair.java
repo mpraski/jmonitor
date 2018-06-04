@@ -3,7 +3,8 @@ package com.mpraski.jmonitor.util;
 import java.util.Comparator;
 import java.util.Objects;
 
-public final class Pair<K extends Comparable<K>, V extends Comparable<V>> implements Comparable<Pair<K, V>> {
+public final class Pair<K extends Comparable<? super K>, V extends Comparable<? super V>>
+		implements Comparable<Pair<K, V>> {
 	private final K key;
 	private final V value;
 
@@ -37,9 +38,7 @@ public final class Pair<K extends Comparable<K>, V extends Comparable<V>> implem
 
 	@Override
 	public int hashCode() {
-		int result = Objects.hashCode(key);
-		result = 31 * result + Objects.hashCode(value);
-		return result;
+		return Objects.hashCode(key) ^ Objects.hashCode(value);
 	}
 
 	@Override

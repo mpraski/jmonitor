@@ -188,6 +188,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		super.visitMethodInsn(opc, owner, name, desc, isInterface);
 	}
 
+	// Assuming the caller knows the type of object on top of stack
 	@SuppressWarnings("unchecked")
 	private <T> T getTop() {
 		if (stack.isEmpty())

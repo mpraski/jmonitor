@@ -2,10 +2,11 @@ package com.mpraski.jmonitor.common;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -48,7 +49,11 @@ public final class MonitorClassLoader extends ClassLoader {
 		compiler.compile(defInstance.getEventPatterns());
 
 		this.matchers = compiler.getMatchers();
-		this.mapped = matchers.stream().collect(Collectors.groupingBy(EventPatternMatcher::getType));
+		this.mapped = new EnumMap<>(EventType.class);
+
+		for (EventPatternMatcher m : matchers) {
+			mapped.computeIfAbsent(m.getType(), k -> new ArrayList<>()).add(m);
+		}
 
 		byte[] resolverBytes = ResolverWriter.write(compiler.getMonitors());
 		if (resolverBytes == null)
@@ -77,6 +82,7 @@ public final class MonitorClassLoader extends ClassLoader {
 		return t;
 	}
 
+	// Assuming caller knows the type of loaded class
 	@SuppressWarnings("unchecked")
 	private <T> Class<T> loadClassOfType(String name) {
 		Class<T> clazz = null;
@@ -91,7 +97,7 @@ public final class MonitorClassLoader extends ClassLoader {
 		return clazz;
 	}
 
-	private Class defineClass(String name, byte[] b) {
+	private Class<?> defineClass(String name, byte[] b) {
 		return defineClass(name, b, 0, b.length);
 	}
 

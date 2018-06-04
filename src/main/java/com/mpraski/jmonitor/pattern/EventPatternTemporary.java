@@ -111,6 +111,15 @@ public final class EventPatternTemporary implements Cloneable {
 	}
 
 	@Override
+	public int hashCode() {
+		int result = Objects.hashCode(type);
+		result = 31 * result + Objects.hashCode(inPattern);
+		result = 31 * result + Objects.hashCode(fromPattern);
+		result = 31 * result + Objects.hashCode(ofPattern);
+		return result;
+	}
+
+	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
 
@@ -126,15 +135,6 @@ public final class EventPatternTemporary implements Cloneable {
 		});
 
 		return builder.toString();
-	}
-
-	@Override
-	public int hashCode() {
-		int result = Objects.hashCode(type);
-		result = 31 * result + Objects.hashCode(inPattern);
-		result = 31 * result + Objects.hashCode(fromPattern);
-		result = 31 * result + Objects.hashCode(ofPattern);
-		return result;
 	}
 
 	public Map<String, Boolean> getInPattern() {
