@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -32,9 +31,6 @@ public class ResolverWriter implements Opcodes {
 		{
 			methodVisitor = classWriter.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
 			methodVisitor.visitCode();
-			Label label0 = new Label();
-			methodVisitor.visitLabel(label0);
-			methodVisitor.visitLineNumber(3, label0);
 			methodVisitor.visitVarInsn(ALOAD, 0);
 			methodVisitor.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
 			methodVisitor.visitInsn(RETURN);

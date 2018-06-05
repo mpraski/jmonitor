@@ -14,7 +14,7 @@ public class TestDefinitions implements EventPatternDefinitions {
 		// EventPattern p2 = EventPattern.onFieldRead().of("lilp").from("l(.*)")
 		// .doAfter("com.mpraski.dummy.DummyMonitor2");
 		EventPattern p3 = EventPattern.onFieldWrite().of("lel").from("setLol")
-				.doBefore("com.mpraski.dummy.DummyMonitor2");
+				.doBefore("com.mpraski.dummy.DummyMonitor2").setTag("example");
 
 		final List<EventPattern> patterns = new ArrayList<>();
 		patterns.add(p);

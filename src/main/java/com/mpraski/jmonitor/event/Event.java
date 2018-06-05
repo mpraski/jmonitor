@@ -1,5 +1,7 @@
 package com.mpraski.jmonitor.event;
 
+import java.util.Objects;
+
 public final class Event {
 	public Event(String tag, EventType type, String signature, Object target, Object[] arguments,
 			StackTraceElement[] callstack) {
@@ -54,5 +56,24 @@ public final class Event {
 
 	public StackTraceElement[] getCallstack() {
 		return callstack;
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+
+		sb.append("Type: '" + this.type + "', Tag: '" + Objects.toString(tag, "null") + "', Signature: '"
+				+ Objects.toString(signature, "null") + "', Target: '" + Objects.toString(target, "null")
+				+ "', Arguments: [ ");
+
+		if (arguments != null)
+			for (Object o : arguments) {
+				sb.append(o);
+				sb.append(' ');
+			}
+
+		sb.append(']');
+
+		return sb.toString();
 	}
 }

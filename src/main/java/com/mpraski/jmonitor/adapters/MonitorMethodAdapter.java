@@ -21,7 +21,6 @@ import java.util.Map;
 
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.AnalyzerAdapter;
@@ -42,10 +41,13 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	private final List<EventData> beforeMonitors, afterMonitors, insteadMonitors;
 
-	protected MonitorMethodAdapter(String owner, int access, String name, String desc, MethodVisitor mv,
-			LocalVariablesSorter lvs, List<EventPatternMatcher> matchers,
-			Map<EventType, List<EventPatternMatcher>> mapped, Map<EventPatternMatcher, Boolean> matchesFrom,
-			List<EventData> beforeMonitors, List<EventData> afterMonitors, List<EventData> insteadMonitors) {
+	private boolean shouldGenerateLocal = false;
+	private int generatedLocal;
+
+	protected MonitorMethodAdapter(String owner, int access, String name, String desc, LocalVariablesSorter lvs,
+			List<EventPatternMatcher> matchers, Map<EventType, List<EventPatternMatcher>> mapped,
+			Map<EventPatternMatcher, Boolean> matchesFrom, List<EventData> beforeMonitors,
+			List<EventData> afterMonitors, List<EventData> insteadMonitors) {
 		super(ASM5, owner, access, name, desc, lvs);
 
 		this.thisName = name;
@@ -69,7 +71,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	@Override
 	public void visitInsn(int opcode) {
-		resetMonitors();
+		reset();
 
 		switch (opcode) {
 		case IRETURN:
@@ -100,7 +102,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	@Override
 	public void visitFieldInsn(int opcode, String owner, String name, String desc) {
-		resetMonitors();
+		reset();
 
 		switch (opcode) {
 		case GETFIELD:
@@ -124,7 +126,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	@Override
 	public void visitVarInsn(int opcode, int var) {
-		resetMonitors();
+		reset();
 
 		switch (opcode) {
 		case ILOAD:
@@ -146,7 +148,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	@Override
 	public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
-		resetMonitors();
+		reset();
 
 		// localNames.put(index, new LocalVariable(name, desc, signature));
 
@@ -155,7 +157,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	@Override
 	public void visitTypeInsn(int opcode, String desc) {
-		resetMonitors();
+		reset();
 
 		switch (opcode) {
 		case NEW:
@@ -171,25 +173,21 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	@Override
 	public void visitIincInsn(int var, int increment) {
-		resetMonitors();
-
-		// if (localNames.containsKey(var)) {
-
-		// }
+		reset();
 
 		super.visitIincInsn(var, increment);
 	}
 
 	@Override
 	public void visitInvokeDynamicInsn(String name, String desc, Handle bsm, Object... bsmArgs) {
-		resetMonitors();
+		reset();
 
 		super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
 	}
 
 	@Override
 	public void visitMethodInsn(int opc, String owner, String name, String desc, boolean isInterface) {
-		resetMonitors();
+		reset();
 
 		super.visitMethodInsn(opc, owner, name, desc, isInterface);
 	}
@@ -212,13 +210,14 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	private void tryMatch(EventType type, String of, String name, String desc, String owner) {
 		for (EventPatternMatcher m : mapped.get(type))
 			if (matchesFrom.get(m) && m.matchesOf(of))
-				addMonitors(m, of, name, desc, owner);
+				addMonitors(m, desc, name, desc, owner);
 	}
 
-	private void resetMonitors() {
+	private void reset() {
 		beforeMonitors.clear();
 		afterMonitors.clear();
 		insteadMonitors.clear();
+		shouldGenerateLocal = false;
 	}
 
 	private void addMonitors(EventPatternMatcher e) {
@@ -236,6 +235,9 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 				break;
 			}
 		}
+
+		if (e.getType() == EventType.FIELD_WRITE || e.getType() == EventType.FIELD_WRITE_STATIC)
+			shouldGenerateLocal = true;
 	}
 
 	private void addMonitors(EventPatternMatcher e, String signature, String name, String desc, String owner) {
@@ -254,20 +256,28 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 				break;
 			}
 		}
+
+		if (e.getType() == EventType.FIELD_WRITE || e.getType() == EventType.FIELD_WRITE_STATIC)
+			shouldGenerateLocal = true;
 	}
 
 	private void insertBeforeMonitors() {
+		if (shouldGenerateLocal)
+			generatedLocal = captureLocal();
+
 		for (EventData e : beforeMonitors) {
 			switch (e.getType()) {
 			case FIELD_READ:
-				generateFieldRead(e);
+				visitFieldRead(e);
 				break;
 			case FIELD_WRITE:
-				generateBeforeFieldWrite(e);
+				visitFieldWrite(e);
 				break;
 			case FIELD_READ_STATIC:
+				visitStaticFieldRead(e);
 				break;
 			case FIELD_WRITE_STATIC:
+				visitStaticFieldWrite(e);
 				break;
 			case METHOD_CALL:
 				break;
@@ -291,13 +301,16 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		for (EventData e : afterMonitors) {
 			switch (e.getType()) {
 			case FIELD_READ:
-				generateFieldRead(e);
+				visitFieldRead(e);
 				break;
 			case FIELD_WRITE:
+				visitFieldWrite(e);
 				break;
 			case FIELD_READ_STATIC:
+				visitStaticFieldRead(e);
 				break;
 			case FIELD_WRITE_STATIC:
+				visitStaticFieldWrite(e);
 				break;
 			case METHOD_CALL:
 				break;
@@ -315,15 +328,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		}
 	}
 
-	private void generateFieldRead(EventData e) {
-		visitEventStart(e);
-		super.visitVarInsn(ALOAD, 0);
-		super.visitFieldInsn(GETFIELD, e.getOwner(), e.getName(), e.getDesc());
-		autobox(e.getDesc());
-		visitEventEnd(e);
-	}
-
-	private void generateBeforeFieldWrite(EventData e) {
+	private int captureLocal() {
 		super.visitInsn(DUP);
 
 		String newTop = autobox(getTop());
@@ -331,11 +336,37 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		int l = lvs.newLocal(Type.getObjectType(newTop));
 		super.visitVarInsn(ASTORE, l);
 
+		return l;
+	}
+
+	private void visitFieldRead(EventData e) {
 		visitEventStart(e);
 		super.visitVarInsn(ALOAD, 0);
 		super.visitFieldInsn(GETFIELD, e.getOwner(), e.getName(), e.getDesc());
 		autobox(e.getDesc());
-		visitEventEndForArgs(e, l);
+		visitEventEnd(e);
+	}
+
+	private void visitFieldWrite(EventData e) {
+		visitEventStart(e);
+		super.visitVarInsn(ALOAD, 0);
+		super.visitFieldInsn(GETFIELD, e.getOwner(), e.getName(), e.getDesc());
+		autobox(e.getDesc());
+		visitEventEndForArgs(e, generatedLocal);
+	}
+
+	private void visitStaticFieldRead(EventData e) {
+		visitEventStart(e);
+		super.visitFieldInsn(GETSTATIC, e.getOwner(), e.getName(), e.getDesc());
+		autobox(e.getDesc());
+		visitEventEnd(e);
+	}
+
+	private void visitStaticFieldWrite(EventData e) {
+		visitEventStart(e);
+		super.visitFieldInsn(GETSTATIC, e.getOwner(), e.getName(), e.getDesc());
+		autobox(e.getDesc());
+		visitEventEndForArgs(e, generatedLocal);
 	}
 
 	private void visitEventStart(EventData e) {

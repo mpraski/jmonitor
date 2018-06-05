@@ -5,6 +5,8 @@ public class Dummy {
 	private int lilp = 1;
 	private int gosh = 2;
 
+	private static String wop = "wop";
+
 	public static void main(String[] args) {
 		Dummy d = new Dummy();
 		System.out.println(d.lol());
@@ -33,5 +35,13 @@ public class Dummy {
 
 	public void setLis(int f) {
 		this.lilp = Integer.parseInt("3");
+	}
+
+	public String readWop() {
+		return wop;
+	}
+
+	public void writeWop(String s) {
+		wop = s;
 	}
 }

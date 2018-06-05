@@ -46,8 +46,8 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 
 		if (mv != null) {
 			LocalVariablesSorter lvs = new LocalVariablesSorter(access, desc, mv);
-			mv = new MonitorMethodAdapter(owner, access, name, desc, mv, lvs, matchers, mapped, matchesFrom,
-					beforeMonitors, afterMonitors, insteadMonitors);
+			mv = new MonitorMethodAdapter(owner, access, name, desc, lvs, matchers, mapped, matchesFrom, beforeMonitors,
+					afterMonitors, insteadMonitors);
 		}
 
 		return mv;
