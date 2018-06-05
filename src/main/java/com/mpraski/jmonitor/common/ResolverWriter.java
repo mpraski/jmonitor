@@ -1,5 +1,8 @@
 package com.mpraski.jmonitor.common;
 
+import static com.mpraski.jmonitor.util.Constants.insteadMonitorClassType;
+import static com.mpraski.jmonitor.util.Constants.monitorClassType;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -13,8 +16,6 @@ import com.mpraski.jmonitor.pattern.EventMonitor;
 import com.mpraski.jmonitor.pattern.EventOrder;
 
 public class ResolverWriter implements Opcodes {
-	private static final String monitorClass = "Lcom/mpraski/jmonitor/common/Monitor;";
-	private static final String insteadMonitorClass = "Lcom/mpraski/jmonitor/common/InsteadMonitor;";
 
 	public static byte[] write(Set<EventMonitor> monitors) {
 		Set<String> processed = new HashSet<>(monitors.size());
@@ -51,7 +52,7 @@ public class ResolverWriter implements Opcodes {
 			processed.add(m.getMonitor());
 
 			fieldName = m.getFieldName();
-			mClass = m.getOrder() == EventOrder.INSTEAD ? insteadMonitorClass : monitorClass;
+			mClass = m.getOrder() == EventOrder.INSTEAD ? insteadMonitorClassType : monitorClassType;
 
 			fieldVisitor = classWriter.visitField(ACC_PUBLIC | ACC_FINAL | ACC_STATIC, fieldName, mClass, null, null);
 			fieldVisitor.visitEnd();
@@ -67,7 +68,7 @@ public class ResolverWriter implements Opcodes {
 				continue;
 			processed.add(m.getMonitor());
 
-			mClass = m.getOrder() == EventOrder.INSTEAD ? insteadMonitorClass : monitorClass;
+			mClass = m.getOrder() == EventOrder.INSTEAD ? insteadMonitorClassType : monitorClassType;
 			internalName = toInternalType(m.getMonitor());
 			fieldName = m.getFieldName();
 

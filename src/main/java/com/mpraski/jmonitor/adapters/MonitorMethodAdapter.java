@@ -1,5 +1,21 @@
 package com.mpraski.jmonitor.adapters;
 
+import static com.mpraski.jmonitor.util.Constants.TYPE_BOOLEAN;
+import static com.mpraski.jmonitor.util.Constants.TYPE_BYTE;
+import static com.mpraski.jmonitor.util.Constants.TYPE_CHARACTER;
+import static com.mpraski.jmonitor.util.Constants.TYPE_DOUBLE;
+import static com.mpraski.jmonitor.util.Constants.TYPE_FLOAT;
+import static com.mpraski.jmonitor.util.Constants.TYPE_INTEGER;
+import static com.mpraski.jmonitor.util.Constants.TYPE_LONG;
+import static com.mpraski.jmonitor.util.Constants.TYPE_SHORT;
+import static com.mpraski.jmonitor.util.Constants.eventType;
+import static com.mpraski.jmonitor.util.Constants.insteadMonitorClass;
+import static com.mpraski.jmonitor.util.Constants.insteadMonitorClassFunc;
+import static com.mpraski.jmonitor.util.Constants.insteadMonitorClassType;
+import static com.mpraski.jmonitor.util.Constants.monitorClass;
+import static com.mpraski.jmonitor.util.Constants.monitorClassFunc;
+import static com.mpraski.jmonitor.util.Constants.monitorClassType;
+
 import java.util.List;
 import java.util.Map;
 
@@ -15,19 +31,9 @@ import com.mpraski.jmonitor.event.EventType;
 import com.mpraski.jmonitor.pattern.EventMonitor;
 import com.mpraski.jmonitor.pattern.EventOrder;
 import com.mpraski.jmonitor.pattern.EventPatternMatcher;
-import com.mpraski.jmonitor.util.Constants;
 import com.mpraski.jmonitor.util.Pair;
 
 public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
-
-	private static final String monitorClassType = "Lcom/mpraski/jmonitor/common/Monitor;";
-	private static final String insteadMonitorClassType = "Lcom/mpraski/jmonitor/common/InsteadMonitor;";
-	private static final String monitorClass = "com/mpraski/jmonitor/common/Monitor";
-	private static final String insteadMonitorClass = "com/mpraski/jmonitor/common/InsteadMonitor";
-	private static final String monitorClassFunc = "onEvent";
-	private static final String insteadMonitorClassFunc = "doInstead";
-	private static final Type typeOfEvent = Type.getObjectType("com/mpraski/jmonitor/event/Event");
-
 	private final LocalVariablesSorter lvs;
 
 	private final String thisName, thisDesc, thisOwner;
@@ -344,7 +350,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 			super.visitLdcInsn(e.getTag());
 		}
 
-		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/event/EventType", Constants.eventType(e.getType()),
+		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/event/EventType", eventType(e.getType()),
 				"Lcom/mpraski/jmonitor/event/EventType;");
 
 		if (e.getSignature() == null) {
@@ -447,28 +453,28 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 		switch (desc) {
 		case "ZF":
-			type = Constants.BOOLEAN;
+			type = TYPE_BOOLEAN;
 			break;
 		case "C":
-			type = Constants.CHARACTER;
+			type = TYPE_CHARACTER;
 			break;
 		case "B":
-			type = Constants.BYTE;
+			type = TYPE_BYTE;
 			break;
 		case "S":
-			type = Constants.SHORT;
+			type = TYPE_SHORT;
 			break;
 		case "I":
-			type = Constants.INTEGER;
+			type = TYPE_INTEGER;
 			break;
 		case "F":
-			type = Constants.FLOAT;
+			type = TYPE_FLOAT;
 			break;
 		case "J":
-			type = Constants.LONG;
+			type = TYPE_LONG;
 			break;
 		case "D":
-			type = Constants.DOUBLE;
+			type = TYPE_DOUBLE;
 			break;
 		}
 
