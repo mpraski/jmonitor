@@ -367,12 +367,12 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 				"(Lcom/mpraski/jmonitor/event/Event;)V", true);
 	}
 
-	private void visitEventEndForArgs(EventData e, int localArgs) {
+	private void visitEventEndForArgs(EventData e, int localArg) {
 		super.visitInsn(ICONST_1);
 		super.visitTypeInsn(ANEWARRAY, "java/lang/Object");
 		super.visitInsn(DUP);
 		super.visitInsn(ICONST_0);
-		super.visitVarInsn(ALOAD, localArgs);
+		super.visitVarInsn(ALOAD, localArg);
 		super.visitInsn(AASTORE);
 
 		super.visitMethodInsn(INVOKESTATIC, "java/lang/Thread", "currentThread", "()Ljava/lang/Thread;", false);
@@ -384,6 +384,59 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		super.visitMethodInsn(INVOKEINTERFACE, e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClass : monitorClass,
 				e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClassFunc : monitorClassFunc,
 				"(Lcom/mpraski/jmonitor/event/Event;)V", true);
+	}
+
+	private void visitEventEndForArgs(EventData e, int[] localArgs) {
+		pushInt(localArgs.length);
+		super.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+		super.visitInsn(DUP);
+		for (int i = 0; i < localArgs.length; i++) {
+			super.visitInsn(DUP);
+			pushInt(i);
+			super.visitVarInsn(ALOAD, localArgs[i]);
+			super.visitInsn(AASTORE);
+		}
+
+		super.visitMethodInsn(INVOKESTATIC, "java/lang/Thread", "currentThread", "()Ljava/lang/Thread;", false);
+		super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Thread", "getStackTrace", "()[Ljava/lang/StackTraceElement;",
+				false);
+		super.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/event/Event", "<init>",
+				"(Ljava/lang/String;Lcom/mpraski/jmonitor/event/EventType;Ljava/lang/String;Ljava/lang/Object;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
+				false);
+		super.visitMethodInsn(INVOKEINTERFACE, e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClass : monitorClass,
+				e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClassFunc : monitorClassFunc,
+				"(Lcom/mpraski/jmonitor/event/Event;)V", true);
+	}
+
+	private void pushInt(int i) {
+		if (i < 6) {
+			switch (i) {
+			case 0:
+				super.visitInsn(ICONST_0);
+				break;
+			case 1:
+				super.visitInsn(ICONST_1);
+				break;
+			case 2:
+				super.visitInsn(ICONST_2);
+				break;
+			case 3:
+				super.visitInsn(ICONST_3);
+				break;
+			case 4:
+				super.visitInsn(ICONST_4);
+				break;
+			case 5:
+				super.visitInsn(ICONST_5);
+				break;
+			}
+		} else if (i > 5 && i < 128) {
+			super.visitVarInsn(BIPUSH, i);
+		} else if (i > 127 && i < 32768) {
+			super.visitVarInsn(SIPUSH, i);
+		} else {
+			super.visitVarInsn(LDC, i);
+		}
 	}
 
 	private String autobox(String desc) {

@@ -23,6 +23,7 @@ public class Dummy {
 	}
 
 	public Integer lil() {
+		Object[] luls = new Object[32768];
 		return lilp;
 	}
 
