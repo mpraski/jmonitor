@@ -2,7 +2,16 @@ package com.mpraski.jmonitor.util;
 
 import com.mpraski.jmonitor.event.EventType;
 
-public final class ToString {
+public final class Constants {
+	public static final Pair<String, String> BOOLEAN = new Pair<>("java/lang/Boolean", "(Z)Ljava/lang/Boolean;");
+	public static final Pair<String, String> CHARACTER = new Pair<>("java/lang/Character", "(C)Ljava/lang/Character;");
+	public static final Pair<String, String> BYTE = new Pair<>("java/lang/Byte", "(B)Ljava/lang/Byte;");
+	public static final Pair<String, String> SHORT = new Pair<>("java/lang/Short", "(S)Ljava/lang/Short;");
+	public static final Pair<String, String> INTEGER = new Pair<>("java/lang/Integer", "(I)Ljava/lang/Integer;");
+	public static final Pair<String, String> FLOAT = new Pair<>("java/lang/Float", "(I)Ljava/lang/Float;");
+	public static final Pair<String, String> LONG = new Pair<>("java/lang/Long", "(J)Ljava/lang/Long;");
+	public static final Pair<String, String> DOUBLE = new Pair<>("java/lang/Double", "(D)Ljava/lang/Double;");
+
 	public static String eventType(EventType type) {
 		String s = null;
 

@@ -34,7 +34,7 @@ public final class EventPatternMatcher {
 			if (e.getValue()) {
 				inPatternPositive.add(Pattern.compile(e.getKey()));
 			} else {
-				sb.append("(");
+				sb.append('(');
 				sb.append(e.getKey());
 				sb.append(")|");
 			}
@@ -53,7 +53,7 @@ public final class EventPatternMatcher {
 			if (e.getValue()) {
 				fromPatternPositive.add(Pattern.compile(e.getKey()));
 			} else {
-				sb.append("(");
+				sb.append('(');
 				sb.append(e.getKey());
 				sb.append(")|");
 			}
@@ -72,7 +72,7 @@ public final class EventPatternMatcher {
 			if (e.getValue()) {
 				ofPatternPositive.add(Pattern.compile(e.getKey()));
 			} else {
-				sb.append("(");
+				sb.append('(');
 				sb.append(e.getKey());
 				sb.append(")|");
 			}

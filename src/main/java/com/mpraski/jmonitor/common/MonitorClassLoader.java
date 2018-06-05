@@ -122,7 +122,7 @@ public final class MonitorClassLoader extends ClassLoader {
 				ClassReader cr = new ClassReader(classBytes);
 				ClassWriter cw = new ClassWriter(cr, 0);
 				ClassVisitor cv = new MonitorClassAdapter(cw, matchers, mapped);
-				cr.accept(cv, 0);
+				cr.accept(cv, ClassReader.EXPAND_FRAMES);
 
 				clazz = defineClass(name, cw.toByteArray());
 			} catch (IOException e) {
