@@ -483,7 +483,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		Pair<String, String> type = null;
 
 		switch (desc) {
-		case "ZF":
+		case "Z":
 			type = TYPE_BOOLEAN;
 			break;
 		case "C":
