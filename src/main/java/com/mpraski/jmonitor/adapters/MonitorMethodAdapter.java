@@ -295,7 +295,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 			case METHOD_CALL:
 				break;
 			case RETURN:
-				visitReturn(e);
+				visitLastOnStack(e);
 				break;
 			case THROW:
 				break;
@@ -315,13 +315,13 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		for (EventData e : afterMonitors) {
 			switch (e.getType()) {
 			case FIELD_READ:
-				visitFieldRead(e);
+				visitLastOnStack(e);
 				break;
 			case FIELD_WRITE:
 				visitFieldWrite(e);
 				break;
 			case FIELD_READ_STATIC:
-				visitStaticFieldRead(e);
+				visitLastOnStack(e);
 				break;
 			case FIELD_WRITE_STATIC:
 				visitStaticFieldWrite(e);
@@ -386,7 +386,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		visitEventEndWithArgs(e, generatedLocal);
 	}
 
-	private void visitReturn(EventData e) {
+	private void visitLastOnStack(EventData e) {
 		visitEventStartWithDup(e);
 		visitEventEnd(e);
 	}
