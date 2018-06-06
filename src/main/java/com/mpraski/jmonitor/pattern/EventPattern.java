@@ -201,7 +201,7 @@ public final class EventPattern implements Cloneable {
 	}
 
 	public static EventPattern onThrow() {
-		return new EventPattern(EventType.METHOD_CALL);
+		return new EventPattern(EventType.THROW);
 	}
 
 	public static EventPattern onInstanceCreated() {

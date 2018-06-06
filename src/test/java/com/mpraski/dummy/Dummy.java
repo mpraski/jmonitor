@@ -15,9 +15,15 @@ public class Dummy {
 		d.lil();
 		d.setLol();
 		d.writeInt();
-		d.writeMumbo();
+		try {
+			d.writeMumbo(false);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		d.writeJumbo();
 		d.readWop();
+		d.writeObject();
 	}
 
 	public void sayHello() {
@@ -53,11 +59,22 @@ public class Dummy {
 		return gosh;
 	}
 
-	public double writeMumbo() {
+	public double writeMumbo(boolean lol) throws Exception {
+		if (lol)
+			throw new Exception();
+
+		synchronized (this) {
+			mumbo = 234;
+		}
+
 		return mumbo;
 	}
 
 	public long writeJumbo() {
 		return jumbo;
+	}
+
+	public Object writeObject() {
+		return new Object();
 	}
 }

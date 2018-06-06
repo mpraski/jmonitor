@@ -23,10 +23,14 @@ public class TestDefinitions implements EventPatternDefinitions {
 		EventPattern p6 = EventPattern.onReturn().from("(.*)writeMumbo").doBefore("com.mpraski.dummy.DummyMonitor3");
 		EventPattern p7 = EventPattern.onReturn().from("(.*)writeJumbo").doBefore("com.mpraski.dummy.DummyMonitor3");
 		EventPattern p8 = EventPattern.onFieldRead().from("(.*)writeJumbo").doBefore("com.mpraski.dummy.DummyMonitor3");
+		EventPattern p9 = EventPattern.onInstanceCreated().from("(.*)writeObject")
+				.doAfter("com.mpraski.dummy.DummyMonitor3");
+		EventPattern p10 = EventPattern.onMonitorExit().from("(.*)writeMumbo").of("com.mpraski.dummy.Dummy")
+				.doAfter("com.mpraski.dummy.DummyMonitor3");
 
 		final List<EventPattern> patterns = new ArrayList<>();
 		patterns.add(p);
-		patterns.add(p8);
+		patterns.add(p10);
 
 		return patterns;
 	}
