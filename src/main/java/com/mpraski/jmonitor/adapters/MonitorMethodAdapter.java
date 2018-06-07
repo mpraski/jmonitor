@@ -44,6 +44,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	private boolean shouldGenerateLocal = false;
 	private boolean shouldGenerateDup = false;
 	private int generatedLocal;
+	private EventType currentType;
 
 	protected MonitorMethodAdapter(String owner, int access, String name, String desc, LocalVariablesSorter lvs,
 			List<EventPatternMatcher> matchers, Map<EventType, List<EventPatternMatcher>> mapped,
@@ -51,9 +52,9 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 			List<EventData> afterMonitors, List<EventData> insteadMonitors) {
 		super(ASM5, owner, access, name, desc, lvs);
 
-		this.thisName = (owner + '.' + name).replace('/', '.');
-		this.thisDesc = desc;
 		this.thisOwner = owner.replace('/', '.');
+		this.thisName = owner + '.' + name.replace('/', '.');
+		this.thisDesc = desc;
 		this.lvs = lvs;
 		this.mapped = mapped;
 		this.matchesFrom = matchesFrom;
@@ -222,12 +223,16 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		for (EventPatternMatcher m : mapped.get(type))
 			if (matchesFrom.get(m))
 				addMonitors(m);
+
+		currentType = type;
 	}
 
 	private void tryMatch(EventType type, String of, String name, String desc, String owner) {
 		for (EventPatternMatcher m : mapped.get(type))
 			if (matchesFrom.get(m) && m.matchesOf(of))
 				addMonitors(m, name, desc, owner);
+
+		currentType = type;
 	}
 
 	private void reset() {
@@ -290,76 +295,87 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		if (shouldGenerateDup)
 			super.visitInsn(DUP);
 
-		for (EventData e : beforeMonitors) {
-			switch (e.getType()) {
-			case FIELD_READ:
+		switch (currentType) {
+		case FIELD_READ:
+			for (EventData e : beforeMonitors)
 				visitFieldRead(e);
-				break;
-			case FIELD_WRITE:
+			break;
+		case FIELD_WRITE:
+			for (EventData e : beforeMonitors)
 				visitFieldWrite(e);
-				break;
-			case FIELD_READ_STATIC:
+			break;
+		case FIELD_READ_STATIC:
+			for (EventData e : beforeMonitors)
 				visitStaticFieldRead(e);
-				break;
-			case FIELD_WRITE_STATIC:
+			break;
+		case FIELD_WRITE_STATIC:
+			for (EventData e : beforeMonitors)
 				visitStaticFieldWrite(e);
-				break;
-			case METHOD_CALL:
+			break;
+		case METHOD_CALL:
 
-				break;
-			case RETURN:
+			break;
+		case RETURN:
+			for (EventData e : beforeMonitors)
 				visitTopWithAutobox(e);
-				break;
-			case THROW:
+			break;
+		case THROW:
+			for (EventData e : beforeMonitors)
 				visitTopWithAutobox(e);
-				break;
-			case INSTANCE:
+			break;
+		case INSTANCE:
 
-				break;
-			case INSTANCE_ARRAY:
+			break;
+		case INSTANCE_ARRAY:
 
-				break;
-			case MONITOR_ENTER:
+			break;
+		case MONITOR_ENTER:
+			for (EventData e : beforeMonitors)
 				visitTopWithAutobox(e);
-				break;
-			case MONITOR_EXIT:
+			break;
+		case MONITOR_EXIT:
+			for (EventData e : beforeMonitors)
 				visitTopWithAutobox(e);
-				break;
-			}
+			break;
 		}
+
 	}
 
 	private void insertAfterMonitors() {
-		for (EventData e : afterMonitors) {
-			switch (e.getType()) {
-			case FIELD_READ:
+		switch (currentType) {
+		case FIELD_READ:
+			for (EventData e : afterMonitors)
 				visitTopWithAutobox(e);
-				break;
-			case FIELD_WRITE:
+			break;
+		case FIELD_WRITE:
+			for (EventData e : afterMonitors)
 				visitFieldWrite(e);
-				break;
-			case FIELD_READ_STATIC:
+			break;
+		case FIELD_READ_STATIC:
+			for (EventData e : afterMonitors)
 				visitTopWithAutobox(e);
-				break;
-			case FIELD_WRITE_STATIC:
+			break;
+		case FIELD_WRITE_STATIC:
+			for (EventData e : afterMonitors)
 				visitStaticFieldWrite(e);
-				break;
-			case METHOD_CALL:
+			break;
+		case METHOD_CALL:
 
-				break;
-			case INSTANCE:
+			break;
+		case INSTANCE:
 
-				break;
-			case INSTANCE_ARRAY:
+			break;
+		case INSTANCE_ARRAY:
 
-				break;
-			case MONITOR_ENTER:
+			break;
+		case MONITOR_ENTER:
+			for (EventData e : afterMonitors)
 				visitTopWithAutobox(e);
-				break;
-			case MONITOR_EXIT:
+			break;
+		case MONITOR_EXIT:
+			for (EventData e : afterMonitors)
 				visitTopWithSwap(e);
-				break;
-			}
+			break;
 		}
 	}
 
@@ -613,11 +629,12 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		if (stack.isEmpty())
 			throw new IllegalStateException("Stack is empty");
 
+		Object v2 = stack.get(stack.size() - 1);
+
 		if (stack.size() > 1) {
 			Object v1 = stack.get(stack.size() - 2);
-			Object v2 = stack.get(stack.size() - 1);
 
-			if ((v1 instanceof Integer) && (v2 instanceof Integer && v2.equals(TOP))) {
+			if (v1 instanceof Integer && v2 instanceof Integer && v2.equals(TOP)) {
 				Integer desc = (Integer) v1;
 
 				if (desc.equals(LONG)) {
@@ -632,11 +649,9 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 				throw new IllegalStateException("Cannot autobox TOP");
 			}
-
-			return autobox(v2);
 		}
 
-		return autobox(stack.get(stack.size() - 1));
+		return autobox(v2);
 	}
 
 	/*
