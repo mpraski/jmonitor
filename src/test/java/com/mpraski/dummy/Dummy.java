@@ -35,7 +35,7 @@ public class Dummy {
 	}
 
 	public Integer lil() {
-		Object[] luls = new Object[32768];
+		String[] strings = new String[10];
 		return lilp;
 	}
 

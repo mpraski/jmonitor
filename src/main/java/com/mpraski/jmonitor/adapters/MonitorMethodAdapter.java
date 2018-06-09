@@ -173,7 +173,6 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 			tryMatch(EventType.INSTANCE, desc, null, desc, thisName);
 			break;
 		case ANEWARRAY:
-			System.out.println("frddcL " + desc);
 			tryMatch(EventType.INSTANCE_ARRAY, desc, null, desc, thisName);
 			break;
 		}
@@ -417,6 +416,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	private void visitNewInstance(EventData e) {
 		visitEventStart(e);
+		super.visitInsn(ACONST_NULL);
 		visitEventEndWithType(e, e.getDesc());
 	}
 
@@ -544,20 +544,15 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		super.visitLdcInsn(desc);
 		super.visitInsn(AASTORE);
 
-		System.out.println(stack);
-
 		super.visitMethodInsn(INVOKESTATIC, "java/lang/Thread", "currentThread", "()Ljava/lang/Thread;", false);
 		super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Thread", "getStackTrace", "()[Ljava/lang/StackTraceElement;",
 				false);
-		System.out.println(stack);
 		super.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/event/Event", "<init>",
 				"(Ljava/lang/String;Lcom/mpraski/jmonitor/event/EventType;Ljava/lang/Object;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
 				false);
-		System.out.println(stack);
 		super.visitMethodInsn(INVOKEINTERFACE, e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClass : monitorClass,
 				e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClassFunc : monitorClassFunc,
 				"(Lcom/mpraski/jmonitor/event/Event;)V", true);
-		System.out.println(stack);
 	}
 
 	private void pushInt(int i) {
