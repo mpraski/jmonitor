@@ -84,22 +84,22 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 			tryMatch(EventType.RETURN, name, null, name, thisName);
 			break;
 		case ARETURN:
-			String ret = getTopGeneric();
+			String ret = (String) getTop();
 			tryMatch(EventType.RETURN, ret, null, ret, thisName);
 			break;
 		case RETURN:
 			tryMatch(EventType.RETURN);
 			break;
 		case MONITORENTER:
-			String mon1 = getTopGeneric();
+			String mon1 = (String) getTop();
 			tryMatch(EventType.MONITOR_ENTER, mon1, null, mon1, thisName);
 			break;
 		case MONITOREXIT:
-			String mon2 = getTopGeneric();
+			String mon2 = (String) getTop();
 			tryMatch(EventType.MONITOR_EXIT, mon2, null, mon2, thisName);
 			break;
 		case ATHROW:
-			String ex = getTopGeneric();
+			String ex = (String) getTop();
 			tryMatch(EventType.THROW, ex, null, ex, thisName);
 			break;
 		}
@@ -173,6 +173,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 			tryMatch(EventType.INSTANCE, desc, null, desc, thisName);
 			break;
 		case ANEWARRAY:
+			System.out.println("frddcL " + desc);
 			tryMatch(EventType.INSTANCE_ARRAY, desc, null, desc, thisName);
 			break;
 		}
@@ -201,15 +202,6 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		reset();
 
 		super.visitMethodInsn(opc, owner, name, desc, isInterface);
-	}
-
-	// Assuming the caller knows the type of object on top of stack
-	@SuppressWarnings("unchecked")
-	private <T> T getTopGeneric() {
-		if (stack.isEmpty())
-			throw new IllegalStateException("Stack is empty");
-
-		return (T) stack.get(stack.size() - 1);
 	}
 
 	private Object getTop() {
@@ -316,23 +308,16 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 			break;
 		case RETURN:
-			for (EventData e : beforeMonitors)
-				visitTopWithAutobox(e);
-			break;
 		case THROW:
 			for (EventData e : beforeMonitors)
 				visitTopWithAutobox(e);
 			break;
 		case INSTANCE:
-
-			break;
 		case INSTANCE_ARRAY:
-
+			for (EventData e : beforeMonitors)
+				visitNewInstance(e);
 			break;
 		case MONITOR_ENTER:
-			for (EventData e : beforeMonitors)
-				visitTopWithAutobox(e);
-			break;
 		case MONITOR_EXIT:
 			for (EventData e : beforeMonitors)
 				visitTopWithAutobox(e);
@@ -344,16 +329,13 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	private void insertAfterMonitors() {
 		switch (currentType) {
 		case FIELD_READ:
+		case FIELD_READ_STATIC:
 			for (EventData e : afterMonitors)
 				visitTopWithAutobox(e);
 			break;
 		case FIELD_WRITE:
 			for (EventData e : afterMonitors)
 				visitFieldWrite(e);
-			break;
-		case FIELD_READ_STATIC:
-			for (EventData e : afterMonitors)
-				visitTopWithAutobox(e);
 			break;
 		case FIELD_WRITE_STATIC:
 			for (EventData e : afterMonitors)
@@ -431,6 +413,11 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	private void visitTopWithSwap(EventData e) {
 		visitEventStartWithSwap(e);
 		visitEventEnd(e);
+	}
+
+	private void visitNewInstance(EventData e) {
+		visitEventStart(e);
+		visitEventEndWithType(e, e.getDesc());
 	}
 
 	private void visitEventStart(EventData e) {
@@ -547,6 +534,30 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		super.visitMethodInsn(INVOKEINTERFACE, e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClass : monitorClass,
 				e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClassFunc : monitorClassFunc,
 				"(Lcom/mpraski/jmonitor/event/Event;)V", true);
+	}
+
+	private void visitEventEndWithType(EventData e, String desc) {
+		super.visitInsn(ICONST_1);
+		super.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+		super.visitInsn(DUP);
+		super.visitInsn(ICONST_0);
+		super.visitLdcInsn(desc);
+		super.visitInsn(AASTORE);
+
+		System.out.println(stack);
+
+		super.visitMethodInsn(INVOKESTATIC, "java/lang/Thread", "currentThread", "()Ljava/lang/Thread;", false);
+		super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Thread", "getStackTrace", "()[Ljava/lang/StackTraceElement;",
+				false);
+		System.out.println(stack);
+		super.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/event/Event", "<init>",
+				"(Ljava/lang/String;Lcom/mpraski/jmonitor/event/EventType;Ljava/lang/Object;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
+				false);
+		System.out.println(stack);
+		super.visitMethodInsn(INVOKEINTERFACE, e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClass : monitorClass,
+				e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClassFunc : monitorClassFunc,
+				"(Lcom/mpraski/jmonitor/event/Event;)V", true);
+		System.out.println(stack);
 	}
 
 	private void pushInt(int i) {

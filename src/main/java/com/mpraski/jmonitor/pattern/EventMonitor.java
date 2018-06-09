@@ -9,7 +9,7 @@ public final class EventMonitor implements Cloneable {
 
 	public EventMonitor(String monitor, EventOrder order) {
 		this.monitor = monitor;
-		this.fieldName = monitor.replace(".", "");
+		this.fieldName = monitor.replace('.', ' ');
 		this.order = order;
 	}
 

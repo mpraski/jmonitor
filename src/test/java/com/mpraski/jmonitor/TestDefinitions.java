@@ -27,10 +27,12 @@ public class TestDefinitions implements EventPatternDefinitions {
 				.doAfter("com.mpraski.dummy.DummyMonitor3");
 		EventPattern p10 = EventPattern.onMonitorExit().from("(.*)writeMumbo").of("com.mpraski.dummy.Dummy")
 				.doAfter("com.mpraski.dummy.DummyMonitor3");
+		EventPattern p11 = EventPattern.onArrayCreated().from("(.*)lil")
+				.doBefore("com.mpraski.dummy.DummyMonitor4");
 
 		final List<EventPattern> patterns = new ArrayList<>();
 		patterns.add(p);
-		patterns.add(p10);
+		patterns.add(p11);
 
 		return patterns;
 	}
