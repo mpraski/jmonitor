@@ -1,6 +1,6 @@
 package com.mpraski.jmonitor;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.mpraski.jmonitor.pattern.EventPattern;
@@ -30,13 +30,9 @@ public class TestDefinitions implements EventPatternDefinitions {
 		EventPattern p11 = EventPattern.onArrayCreated().from("(.*)lil").doAfter("com.mpraski.dummy.DummyMonitor4");
 		EventPattern p12 = EventPattern.onInstanceCreated().from("(.*)lil").doBefore("com.mpraski.dummy.DummyMonitor4");
 		EventPattern p13 = EventPattern.onInstanceCreated().from("(.*)lil").doAfter("com.mpraski.dummy.DummyMonitor4");
+		EventPattern p14 = EventPattern.onMethodCall().from("(.*)doCall").doBefore("com.mpraski.dummy.DummyMonitor4");
 
-		final List<EventPattern> patterns = new ArrayList<>();
-		//patterns.add(p);
-		patterns.add(p12);
-		patterns.add(p13);
-
-		return patterns;
+		return Arrays.asList(p6, p8, p10, p12, p13, p14);
 	}
 
 }

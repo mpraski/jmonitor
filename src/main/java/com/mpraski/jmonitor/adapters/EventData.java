@@ -24,6 +24,23 @@ public final class EventData {
 		this.owner = owner;
 	}
 
+	public EventData(EventType type, String tag, String monitor, EventOrder order, String name) {
+		this.type = type;
+		this.tag = tag;
+		this.monitor = monitor;
+		this.order = order;
+		this.name = name;
+	}
+
+	public EventData(EventType type, String tag, String monitor, EventOrder order, String name, int numArgs) {
+		this.type = type;
+		this.tag = tag;
+		this.monitor = monitor;
+		this.order = order;
+		this.name = name;
+		this.numArgs = numArgs;
+	}
+
 	private final EventType type;
 	private final EventOrder order;
 	private final String tag;
@@ -31,6 +48,7 @@ public final class EventData {
 	private String name;
 	private String desc;
 	private String owner;
+	private int numArgs;
 
 	public EventType getType() {
 		return type;
@@ -65,5 +83,9 @@ public final class EventData {
 
 	public EventOrder getOrder() {
 		return order;
+	}
+
+	public int getNumArgs() {
+		return numArgs;
 	}
 }

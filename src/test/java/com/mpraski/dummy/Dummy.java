@@ -24,6 +24,7 @@ public class Dummy {
 		d.writeJumbo();
 		d.readWop();
 		d.writeObject();
+		d.doCall();
 	}
 
 	public void sayHello() {
@@ -77,5 +78,13 @@ public class Dummy {
 
 	public Object writeObject() {
 		return new Object();
+	}
+
+	public void someMethod(int a, String b) {
+		System.out.println("someMethod(" + a + ", " + b + ")");
+	}
+
+	public void doCall() {
+		someMethod(12, "asdsa");
 	}
 }

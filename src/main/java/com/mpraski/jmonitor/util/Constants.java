@@ -1,10 +1,11 @@
 package com.mpraski.jmonitor.util;
 
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import com.mpraski.jmonitor.event.EventType;
 
-public final class Constants {
+public final class Constants implements Opcodes {
 	public static final String monitorClassType = "Lcom/mpraski/jmonitor/common/Monitor;";
 	public static final String insteadMonitorClassType = "Lcom/mpraski/jmonitor/common/InsteadMonitor;";
 	public static final String monitorClass = "com/mpraski/jmonitor/common/Monitor";
@@ -22,6 +23,13 @@ public final class Constants {
 	public static final Pair<String, String> TYPE_FLOAT = new Pair<>("java/lang/Float", "(I)Ljava/lang/Float;");
 	public static final Pair<String, String> TYPE_LONG = new Pair<>("java/lang/Long", "(J)Ljava/lang/Long;");
 	public static final Pair<String, String> TYPE_DOUBLE = new Pair<>("java/lang/Double", "(D)Ljava/lang/Double;");
+
+	public static final Type OBJECT_ARRAY_TYPE = Type.getType(Object[].class);
+
+	public static final Pair<Integer, Integer> INTEGER_INSNS = new Pair<>(ISTORE, ILOAD);
+	public static final Pair<Integer, Integer> FLOAT_INSNS = new Pair<>(FSTORE, FLOAD);
+	public static final Pair<Integer, Integer> DOUBLE_INSNS = new Pair<>(DSTORE, DLOAD);
+	public static final Pair<Integer, Integer> LONG_INSNS = new Pair<>(LSTORE, LLOAD);
 
 	public static String eventType(EventType type) {
 		String s = null;
