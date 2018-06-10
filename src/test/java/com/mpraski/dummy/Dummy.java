@@ -36,6 +36,7 @@ public class Dummy {
 
 	public Integer lil() {
 		String[] strings = new String[10];
+		Integer wutt = new Integer(23);
 		return lilp;
 	}
 

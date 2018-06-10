@@ -27,12 +27,14 @@ public class TestDefinitions implements EventPatternDefinitions {
 				.doAfter("com.mpraski.dummy.DummyMonitor3");
 		EventPattern p10 = EventPattern.onMonitorExit().from("(.*)writeMumbo").of("com.mpraski.dummy.Dummy")
 				.doAfter("com.mpraski.dummy.DummyMonitor3");
-		EventPattern p11 = EventPattern.onArrayCreated().from("(.*)lil")
-				.doBefore("com.mpraski.dummy.DummyMonitor4");
+		EventPattern p11 = EventPattern.onArrayCreated().from("(.*)lil").doAfter("com.mpraski.dummy.DummyMonitor4");
+		EventPattern p12 = EventPattern.onInstanceCreated().from("(.*)lil").doBefore("com.mpraski.dummy.DummyMonitor4");
+		EventPattern p13 = EventPattern.onInstanceCreated().from("(.*)lil").doAfter("com.mpraski.dummy.DummyMonitor4");
 
 		final List<EventPattern> patterns = new ArrayList<>();
-		patterns.add(p);
-		patterns.add(p11);
+		//patterns.add(p);
+		patterns.add(p12);
+		patterns.add(p13);
 
 		return patterns;
 	}

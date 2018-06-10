@@ -106,13 +106,16 @@ public final class EventPatternTemporary implements Cloneable {
 
 		EventPatternTemporary c = (EventPatternTemporary) o;
 
-		return Objects.equals(type, c.getType()) && Objects.equals(inPattern, c.getInPattern())
+		return Objects.equals(type, c.getType()) && Objects.equals(tag, c.getTag())
+				&& Objects.equals(monitors, c.getMonitors()) && Objects.equals(inPattern, c.getInPattern())
 				&& Objects.equals(fromPattern, c.getFromPattern()) && Objects.equals(ofPattern, c.getOfPattern());
 	}
 
 	@Override
 	public int hashCode() {
 		int result = Objects.hashCode(type);
+		result = 31 * result + Objects.hashCode(tag);
+		result = 31 * result + Objects.hashCode(monitors);
 		result = 31 * result + Objects.hashCode(inPattern);
 		result = 31 * result + Objects.hashCode(fromPattern);
 		result = 31 * result + Objects.hashCode(ofPattern);
