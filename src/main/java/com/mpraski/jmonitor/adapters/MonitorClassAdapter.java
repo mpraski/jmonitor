@@ -18,7 +18,7 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 	private final List<EventPatternMatcher> matchers;
 	private final Map<EventType, List<EventPatternMatcher>> mapped;
 	private final Map<EventPatternMatcher, Boolean> matchesFrom;
-	private final List<EventData> beforeMonitors, afterMonitors, insteadMonitors;
+	private final List<EventData> eventsBefore, eventsAfter, eventsInstead;
 
 	private String owner;
 
@@ -29,9 +29,9 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 		this.matchers = matchers;
 		this.mapped = mapped;
 		this.matchesFrom = new HashMap<>(matchers.size());
-		this.beforeMonitors = new ArrayList<>();
-		this.afterMonitors = new ArrayList<>();
-		this.insteadMonitors = new ArrayList<>();
+		this.eventsBefore = new ArrayList<>();
+		this.eventsAfter = new ArrayList<>();
+		this.eventsInstead = new ArrayList<>();
 	}
 
 	@Override
@@ -46,8 +46,8 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 
 		if (mv != null) {
 			LocalVariablesSorter lvs = new LocalVariablesSorter(access, desc, mv);
-			mv = new MonitorMethodAdapter(owner, access, name, desc, lvs, matchers, mapped, matchesFrom, beforeMonitors,
-					afterMonitors, insteadMonitors);
+			mv = new MonitorMethodAdapter(owner, access, name, desc, lvs, matchers, mapped, matchesFrom, eventsBefore,
+					eventsAfter, eventsInstead);
 		}
 
 		return mv;

@@ -105,16 +105,14 @@ public final class MonitorClassLoader extends ClassLoader {
 
 	@Override
 	protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-		if (name.startsWith("java") || name.startsWith("com.mpraski.jmonitor")) {
+		if (name.startsWith("java") || name.startsWith("com.mpraski.jmonitor"))
 			return super.loadClass(name, resolve);
-		}
 
 		synchronized (getLockForName(name)) {
 			Class<?> clazz = transformedClasses.get(name);
 
-			if (clazz != null) {
+			if (clazz != null)
 				return clazz;
-			}
 
 			try (InputStream is = getResourceAsStream(name.replace('.', '/') + ".class")) {
 				byte[] classBytes = new byte[is.available()];
