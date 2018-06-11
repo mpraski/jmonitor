@@ -27,9 +27,11 @@ public class TestDefinitions implements EventPatternDefinitions {
 		EventPattern p11 = EventPattern.onArrayCreated().from("(.*)lil").doAfter("com.mpraski.dummy.DummyMonitor4");
 		EventPattern p12 = EventPattern.onInstanceCreated().from("(.*)lil").doBefore("com.mpraski.dummy.DummyMonitor4");
 		EventPattern p13 = EventPattern.onInstanceCreated().from("(.*)lil").doAfter("com.mpraski.dummy.DummyMonitor4");
-		EventPattern p14 = EventPattern.onMethodCall().from("(.*)doCall").doAfter("com.mpraski.dummy.DummyMonitor4");
+		EventPattern p14 = EventPattern.onMethodCall().of("(.*)someMethod").doAfter("com.mpraski.dummy.DummyMonitor4");
+		EventPattern p15 = EventPattern.onMethodCall().of("(.*)nothingToSay")
+				.doBefore("com.mpraski.dummy.DummyMonitor4");
 
-		return Arrays.asList(p6, p8, p10, p12, p13, p14);
+		return Arrays.asList(p6, p8, p10, p12, p13, p14, p15);
 	}
 
 }

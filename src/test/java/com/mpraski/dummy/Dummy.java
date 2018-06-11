@@ -80,11 +80,16 @@ public class Dummy {
 		return new Object();
 	}
 
-	public void someMethod(double a, String b) {
-		System.out.println("someMethod(" + a + ", " + b + ")");
+	public void someMethod(double a, boolean b, String c) {
+		System.out.println("someMethod(" + a + ", " + b + ", " + c + ")");
+	}
+
+	public void nothingToSay() {
+		System.out.println("nope");
 	}
 
 	public void doCall() {
-		someMethod(12.543543, "asdsa");
+		someMethod(12.543543, true, "asdsa");
+		nothingToSay();
 	}
 }

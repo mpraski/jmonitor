@@ -1,9 +1,13 @@
 package com.mpraski.jmonitor.adapters;
 
 import static com.mpraski.jmonitor.util.Constants.DOUBLE_INSNS;
+import static com.mpraski.jmonitor.util.Constants.DOUBLE_TYPE;
 import static com.mpraski.jmonitor.util.Constants.FLOAT_INSNS;
+import static com.mpraski.jmonitor.util.Constants.FLOAT_TYPE;
 import static com.mpraski.jmonitor.util.Constants.INTEGER_INSNS;
+import static com.mpraski.jmonitor.util.Constants.INTEGER_TYPE;
 import static com.mpraski.jmonitor.util.Constants.LONG_INSNS;
+import static com.mpraski.jmonitor.util.Constants.LONG_TYPE;
 import static com.mpraski.jmonitor.util.Constants.OBJECT_ARRAY_TYPE;
 import static com.mpraski.jmonitor.util.Constants.REF_INSNS;
 import static com.mpraski.jmonitor.util.Constants.TYPE_DOUBLE;
@@ -42,7 +46,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	 * Used to add local variables in cases where certain values (e.g. method
 	 * arguments, event args array) need to be preserved.
 	 */
-	private final LocalVariablesSorter lvs;
+	private final LocalVariablesSorter sorter;
 
 	private final String thisName, thisDesc;
 	private final Map<EventType, List<EventPatternMatcher>> mapped;
@@ -70,7 +74,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 		this.thisName = toDots(owner) + '.' + name;
 		this.thisDesc = desc;
-		this.lvs = lvs;
+		this.sorter = lvs;
 		this.mapped = mapped;
 		this.matchesFrom = matchesFrom;
 
@@ -368,6 +372,9 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	private void insertBeforeMonitors() {
+		if (currentType == null)
+			return;
+
 		if (shouldGenerateLocal)
 			generatedLocal = captureLocal();
 
@@ -420,6 +427,9 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	private void insertAfterMonitors() {
+		if (currentType == null)
+			return;
+
 		switch (currentType) {
 		case FIELD_READ:
 		case FIELD_READ_STATIC:
@@ -460,14 +470,12 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	private int captureLocal() {
 		Type topType = getTopType();
 
-		if (topType.equals(Type.LONG_TYPE) || topType.equals(Type.DOUBLE_TYPE))
+		if (isTwoWords(topType))
 			super.visitInsn(DUP2);
 		else
 			super.visitInsn(DUP);
 
-		String newTop = autobox(topType);
-
-		int l = lvs.newLocal(Type.getObjectType(newTop));
+		int l = sorter.newLocal(autobox(topType));
 		super.visitVarInsn(ASTORE, l);
 
 		return l;
@@ -547,20 +555,20 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	 * event.
 	 */
 	private LocalVariable[] captureMethodArguments(int numArgs) {
-		LocalVariable[] localsIndices = new LocalVariable[numArgs + 1];
+		LocalVariable[] localsVars = new LocalVariable[numArgs + 1];
 
 		pushInt(numArgs);
 		super.visitTypeInsn(ANEWARRAY, "java/lang/Object");
 
-		int arrLocal = lvs.newLocal(OBJECT_ARRAY_TYPE);
-		super.visitVarInsn(ASTORE, arrLocal);
+		int methodArgs = sorter.newLocal(OBJECT_ARRAY_TYPE);
+		super.visitVarInsn(ASTORE, methodArgs);
 
 		Type topType;
 		boolean twoWords;
 
 		for (int i = numArgs - 1; i >= 0; i--) {
 			topType = getTopType();
-			twoWords = topType.equals(Type.LONG_TYPE) || topType.equals(Type.DOUBLE_TYPE);
+			twoWords = isTwoWords(topType);
 
 			if (twoWords)
 				super.visitInsn(DUP2);
@@ -569,12 +577,12 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 			Pair<Integer, Integer> insns = getPrimitiveInsns(topType);
 
-			int l = lvs.newLocal(topType);
+			int l = sorter.newLocal(topType);
 			super.visitVarInsn(insns.getKey(), l);
 
-			localsIndices[i] = new LocalVariable(l, insns.getValue());
+			localsVars[i] = new LocalVariable(l, insns.getValue());
 
-			super.visitVarInsn(ALOAD, arrLocal);
+			super.visitVarInsn(ALOAD, methodArgs);
 
 			if (twoWords) {
 				super.visitInsn(DUP_X2);
@@ -592,17 +600,17 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 			super.visitInsn(AASTORE);
 		}
 
-		localsIndices[numArgs] = new LocalVariable(arrLocal, 0);
+		localsVars[numArgs] = new LocalVariable(methodArgs, 0);
 
-		return localsIndices;
+		return localsVars;
 	}
 
 	/*
 	 * Pushes the values of captured method arguments back onto the stack.
 	 */
-	private void restoreMethodArguments(int numArgs, LocalVariable[] vars) {
+	private void restoreMethodArguments(int numArgs, LocalVariable[] localVars) {
 		for (int i = 0; i < numArgs; i++)
-			super.visitVarInsn(vars[i].getLoadInsn(), vars[i].getIndex());
+			super.visitVarInsn(localVars[i].getLoadInsn(), localVars[i].getIndex());
 	}
 
 	private void visitEventStart(EventData e) {
@@ -773,19 +781,6 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		throw new IllegalStateException("Should not reach this state");
 	}
 
-	private Pair<Integer, Integer> getPrimitiveInsns(Type t) {
-		if (t.equals(Type.INT_TYPE))
-			return INTEGER_INSNS;
-		else if (t.equals(Type.FLOAT_TYPE))
-			return FLOAT_INSNS;
-		else if (t.equals(Type.LONG_TYPE))
-			return LONG_INSNS;
-		else if (t.equals(Type.DOUBLE_TYPE))
-			return DOUBLE_INSNS;
-
-		return REF_INSNS;
-	}
-
 	/*
 	 * Attempts to produce a boxed value from descriptor of type of the value on top
 	 * of the stack.
@@ -804,26 +799,26 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	/*
 	 * Pushes a boxed value of the top of the stack.
 	 */
-	private String autobox(Type type) {
+	private Type autobox(Type type) {
 		if (type.equals(Type.LONG_TYPE)) {
 			super.visitInsn(DUP2);
 			super.visitMethodInsn(INVOKESTATIC, TYPE_LONG.getKey(), "valueOf", TYPE_LONG.getValue(), false);
-			return TYPE_LONG.getKey();
+			return LONG_TYPE;
 		} else if (type.equals(Type.DOUBLE_TYPE)) {
 			super.visitInsn(DUP2);
 			super.visitMethodInsn(INVOKESTATIC, TYPE_DOUBLE.getKey(), "valueOf", TYPE_DOUBLE.getValue(), false);
-			return TYPE_DOUBLE.getKey();
+			return DOUBLE_TYPE;
 		} else if (type.equals(Type.INT_TYPE)) {
 			super.visitInsn(DUP);
 			super.visitMethodInsn(INVOKESTATIC, TYPE_INTEGER.getKey(), "valueOf", TYPE_INTEGER.getValue(), false);
-			return TYPE_INTEGER.getKey();
+			return INTEGER_TYPE;
 		} else if (type.equals(Type.FLOAT_TYPE)) {
 			super.visitInsn(DUP);
 			super.visitMethodInsn(INVOKESTATIC, TYPE_FLOAT.getKey(), "valueOf", TYPE_FLOAT.getValue(), false);
-			return TYPE_FLOAT.getKey();
+			return FLOAT_TYPE;
 		}
 
-		return type.getInternalName();
+		return type;
 	}
 
 	/*
@@ -848,7 +843,24 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		return type.getInternalName();
 	}
 
+	private static Pair<Integer, Integer> getPrimitiveInsns(Type t) {
+		if (t.equals(Type.INT_TYPE))
+			return INTEGER_INSNS;
+		else if (t.equals(Type.FLOAT_TYPE))
+			return FLOAT_INSNS;
+		else if (t.equals(Type.LONG_TYPE))
+			return LONG_INSNS;
+		else if (t.equals(Type.DOUBLE_TYPE))
+			return DOUBLE_INSNS;
+
+		return REF_INSNS;
+	}
+
 	private static String toDots(String s) {
 		return s.replace('/', '.');
+	}
+
+	private static boolean isTwoWords(Type type) {
+		return type.equals(Type.LONG_TYPE) || type.equals(Type.DOUBLE_TYPE);
 	}
 }

@@ -58,8 +58,6 @@ public final class EventMonitor implements Cloneable {
 
 	@Override
 	public int hashCode() {
-		int result = monitor.hashCode();
-		result = 31 * result + Objects.hashCode(order);
-		return result;
+		return Objects.hashCode(monitor) ^ Objects.hashCode(order);
 	}
 }

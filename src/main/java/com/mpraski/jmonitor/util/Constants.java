@@ -25,6 +25,10 @@ public final class Constants implements Opcodes {
 	public static final Pair<String, String> TYPE_DOUBLE = new Pair<>("java/lang/Double", "(D)Ljava/lang/Double;");
 
 	public static final Type OBJECT_ARRAY_TYPE = Type.getType(Object[].class);
+	public static final Type INTEGER_TYPE = Type.getType(Integer.class);
+	public static final Type FLOAT_TYPE = Type.getType(Float.class);
+	public static final Type LONG_TYPE = Type.getType(Long.class);
+	public static final Type DOUBLE_TYPE = Type.getType(Double.class);
 
 	public static final Pair<Integer, Integer> REF_INSNS = new Pair<>(ASTORE, ALOAD);
 	public static final Pair<Integer, Integer> INTEGER_INSNS = new Pair<>(ISTORE, ILOAD);
