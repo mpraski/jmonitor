@@ -87,7 +87,7 @@ public final class Constants implements Opcodes {
 	}
 
 	public static Pair<String, String> getPrimitiveClass(String desc) {
-		Pair<String, String> type;
+		Pair<String, String> type = null;
 
 		switch (desc) {
 		case "Z":

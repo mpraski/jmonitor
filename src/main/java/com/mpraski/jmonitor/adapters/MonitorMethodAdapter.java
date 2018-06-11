@@ -33,7 +33,15 @@ import com.mpraski.jmonitor.pattern.EventOrder;
 import com.mpraski.jmonitor.pattern.EventPatternMatcher;
 import com.mpraski.jmonitor.util.Pair;
 
+/*
+ * This MethodVisitor is responsible for injecting appropriate bytecode instructions to perform instrumentation.
+ */
 public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
+
+	/*
+	 * Used to add local variables in cases where certain values (e.g. method
+	 * arguments, event args array) need to be preserved.
+	 */
 	private final LocalVariablesSorter lvs;
 
 	private final String thisName, thisDesc;
@@ -42,9 +50,13 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	private final List<EventData> beforeMonitors, afterMonitors, insteadMonitors;
 
-	private boolean shouldGenerateLocal = false;
-	private boolean shouldGenerateDup = false;
-	private boolean shouldGenerateArgsArray = false;
+	/*
+	 * Temporaries used for capturing some values prior to the target instruction so
+	 * that an event can be generated after this instruction is executed.
+	 */
+	private boolean shouldGenerateLocal;
+	private boolean shouldGenerateDup;
+	private boolean shouldGenerateArgsArray;
 	private int generatedLocal;
 	private int generatedArgsArray;
 	private int currentNumArgs;
@@ -64,6 +76,10 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 		matchesFrom.clear();
 
+		/*
+		 * Compute all the 'from' matches only once, they won't change throughout the
+		 * method execution.
+		 */
 		for (EventPatternMatcher m : matchers)
 			matchesFrom.put(m, m.matchesFrom(thisName));
 
@@ -135,8 +151,6 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	@Override
 	public void visitVarInsn(int opcode, int var) {
-		reset();
-
 		switch (opcode) {
 		case ILOAD:
 		case LLOAD:
@@ -217,7 +231,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	private void tryMatch(EventType type, String of) {
 		for (EventPatternMatcher m : mapped.get(type))
-			if (matchesFrom.get(m))
+			if (matchesFrom.get(m) && m.matchesOf(of))
 				addMonitors(m, of);
 
 		currentType = type;
@@ -403,7 +417,6 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 				visitTopWithAutobox(e);
 			break;
 		}
-
 	}
 
 	private void insertAfterMonitors() {
@@ -441,6 +454,9 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		}
 	}
 
+	/*
+	 * Creates a local variable holding boxed value on the top of the stack.
+	 */
 	private int captureLocal() {
 		Type topType = getTopType();
 
@@ -524,6 +540,12 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		visitEventEndWithArgs(e, generatedArgsArray);
 	}
 
+	/*
+	 * Builds an array of indices of local variables added to preserve the arguments
+	 * of instrumented method in between the event generation. Also, the last entry
+	 * contains the index of an array of boxed arguments ready to be passed to an
+	 * event.
+	 */
 	private LocalVariable[] captureMethodArguments(int numArgs) {
 		LocalVariable[] localsIndices = new LocalVariable[numArgs + 1];
 
@@ -575,6 +597,9 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		return localsIndices;
 	}
 
+	/*
+	 * Pushes the values of captured method arguments back onto the stack.
+	 */
 	private void restoreMethodArguments(int numArgs, LocalVariable[] vars) {
 		for (int i = 0; i < numArgs; i++)
 			super.visitVarInsn(vars[i].getLoadInsn(), vars[i].getIndex());
@@ -713,6 +738,10 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		}
 	}
 
+	/*
+	 * Returns the type of value on the top of the stack. Aware of long/double types
+	 * taking two words.
+	 */
 	private Type getTopType() {
 		Object v2 = getTop();
 
@@ -758,7 +787,8 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	/*
-	 * Attempts to produce a boxed value from descriptor of type on top of stack.
+	 * Attempts to produce a boxed value from descriptor of type of the value on top
+	 * of the stack.
 	 */
 	private String autobox(String desc) {
 		if (desc.length() > 1)
@@ -772,8 +802,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	/*
-	 * Attempts to produce a boxed value from primitive on top of stack. Aware of
-	 * long/double taking two slots.
+	 * Pushes a boxed value of the top of the stack.
 	 */
 	private String autobox(Type type) {
 		if (type.equals(Type.LONG_TYPE)) {
@@ -798,8 +827,8 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	/*
-	 * Attempts to produce a boxed value from primitive on top of stack. Aware of
-	 * long/double taking two slots. No duplication
+	 * Pushes a boxed value of the top of the stack. Does not duplicate the raw
+	 * value.
 	 */
 	private String autoboxWithoutDup(Type type) {
 		if (type.equals(Type.LONG_TYPE)) {
