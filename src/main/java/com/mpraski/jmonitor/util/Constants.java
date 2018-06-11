@@ -26,6 +26,7 @@ public final class Constants implements Opcodes {
 
 	public static final Type OBJECT_ARRAY_TYPE = Type.getType(Object[].class);
 
+	public static final Pair<Integer, Integer> REF_INSNS = new Pair<>(ASTORE, ALOAD);
 	public static final Pair<Integer, Integer> INTEGER_INSNS = new Pair<>(ISTORE, ILOAD);
 	public static final Pair<Integer, Integer> FLOAT_INSNS = new Pair<>(FSTORE, FLOAD);
 	public static final Pair<Integer, Integer> DOUBLE_INSNS = new Pair<>(DSTORE, DLOAD);
@@ -83,5 +84,38 @@ public final class Constants implements Opcodes {
 		}
 
 		return s;
+	}
+
+	public static Pair<String, String> getPrimitiveClass(String desc) {
+		Pair<String, String> type;
+
+		switch (desc) {
+		case "Z":
+			type = TYPE_BOOLEAN;
+			break;
+		case "C":
+			type = TYPE_CHARACTER;
+			break;
+		case "B":
+			type = TYPE_BYTE;
+			break;
+		case "S":
+			type = TYPE_SHORT;
+			break;
+		case "I":
+			type = TYPE_INTEGER;
+			break;
+		case "F":
+			type = TYPE_FLOAT;
+			break;
+		case "J":
+			type = TYPE_LONG;
+			break;
+		case "D":
+			type = TYPE_DOUBLE;
+			break;
+		}
+
+		return type;
 	}
 }

@@ -1,17 +1,17 @@
 package com.mpraski.jmonitor.adapters;
 
+import static com.mpraski.jmonitor.util.Constants.DOUBLE_INSNS;
 import static com.mpraski.jmonitor.util.Constants.FLOAT_INSNS;
 import static com.mpraski.jmonitor.util.Constants.INTEGER_INSNS;
+import static com.mpraski.jmonitor.util.Constants.LONG_INSNS;
 import static com.mpraski.jmonitor.util.Constants.OBJECT_ARRAY_TYPE;
-import static com.mpraski.jmonitor.util.Constants.TYPE_BOOLEAN;
-import static com.mpraski.jmonitor.util.Constants.TYPE_BYTE;
-import static com.mpraski.jmonitor.util.Constants.TYPE_CHARACTER;
+import static com.mpraski.jmonitor.util.Constants.REF_INSNS;
 import static com.mpraski.jmonitor.util.Constants.TYPE_DOUBLE;
 import static com.mpraski.jmonitor.util.Constants.TYPE_FLOAT;
 import static com.mpraski.jmonitor.util.Constants.TYPE_INTEGER;
 import static com.mpraski.jmonitor.util.Constants.TYPE_LONG;
-import static com.mpraski.jmonitor.util.Constants.TYPE_SHORT;
 import static com.mpraski.jmonitor.util.Constants.eventType;
+import static com.mpraski.jmonitor.util.Constants.getPrimitiveClass;
 import static com.mpraski.jmonitor.util.Constants.insteadMonitorClass;
 import static com.mpraski.jmonitor.util.Constants.insteadMonitorClassFunc;
 import static com.mpraski.jmonitor.util.Constants.insteadMonitorClassType;
@@ -22,7 +22,6 @@ import static com.mpraski.jmonitor.util.Constants.monitorClassType;
 import java.util.List;
 import java.util.Map;
 
-import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.AnalyzerAdapter;
@@ -45,9 +44,11 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	private boolean shouldGenerateLocal = false;
 	private boolean shouldGenerateDup = false;
+	private boolean shouldGenerateArgsArray = false;
 	private int generatedLocal;
+	private int generatedArgsArray;
+	private int currentNumArgs;
 	private EventType currentType;
-	private Type[] currentTypes;
 
 	protected MonitorMethodAdapter(String owner, int access, String name, String desc, LocalVariablesSorter lvs,
 			List<EventPatternMatcher> matchers, Map<EventType, List<EventPatternMatcher>> mapped,
@@ -55,7 +56,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 			List<EventData> afterMonitors, List<EventData> insteadMonitors) {
 		super(ASM5, owner, access, name, desc, lvs);
 
-		this.thisName = owner.replace('/', '.') + '.' + name.replace('/', '.');
+		this.thisName = toDots(owner) + '.' + name;
 		this.thisDesc = desc;
 		this.lvs = lvs;
 		this.mapped = mapped;
@@ -82,22 +83,22 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		case LRETURN:
 		case FRETURN:
 		case DRETURN:
-			tryMatch(EventType.RETURN, Type.getInternalName(getTop().getClass()));
+			tryMatch(EventType.RETURN, getTopType().getInternalName());
 			break;
 		case ARETURN:
-			tryMatch(EventType.RETURN, (String) getTop());
+			tryMatch(EventType.RETURN, toDots((String) getTop()));
 			break;
 		case RETURN:
 			tryMatch(EventType.RETURN);
 			break;
 		case MONITORENTER:
-			tryMatch(EventType.MONITOR_ENTER, (String) getTop());
+			tryMatch(EventType.MONITOR_ENTER, toDots((String) getTop()));
 			break;
 		case MONITOREXIT:
-			tryMatch(EventType.MONITOR_EXIT, (String) getTop());
+			tryMatch(EventType.MONITOR_EXIT, toDots((String) getTop()));
 			break;
 		case ATHROW:
-			tryMatch(EventType.THROW, (String) getTop());
+			tryMatch(EventType.THROW, toDots((String) getTop()));
 			break;
 		}
 
@@ -110,7 +111,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	public void visitFieldInsn(int opcode, String owner, String name, String desc) {
 		reset();
 
-		String fieldName = owner.replace('/', '.') + '.' + name;
+		String fieldName = toDots(owner) + '.' + name;
 
 		switch (opcode) {
 		case GETFIELD:
@@ -160,10 +161,10 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 		switch (opcode) {
 		case NEW:
-			tryMatch(EventType.INSTANCE, EventOrder.BEFORE, desc);
+			tryMatch(EventType.INSTANCE, toDots(desc), EventOrder.BEFORE);
 			break;
 		case ANEWARRAY:
-			tryMatch(EventType.INSTANCE_ARRAY, desc);
+			tryMatch(EventType.INSTANCE_ARRAY, toDots(desc));
 			break;
 		}
 
@@ -173,38 +174,24 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	@Override
-	public void visitIincInsn(int var, int increment) {
-		reset();
-
-		super.visitIincInsn(var, increment);
-	}
-
-	@Override
-	public void visitInvokeDynamicInsn(String name, String desc, Handle bsm, Object... bsmArgs) {
-		reset();
-
-		super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
-	}
-
-	@Override
 	public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean isInterface) {
 		reset();
 
-		String methodOwner = owner.replace('/', '.');
+		String methodOwner = toDots(owner);
 		String methodName = methodOwner + '.' + name;
-		currentTypes = Type.getMethodType(desc).getArgumentTypes();
+		int numArgs = Type.getMethodType(desc).getArgumentTypes().length;
 
 		switch (opcode) {
 		case INVOKESPECIAL:
 			if (name.equals("<init>"))
-				tryMatch(EventType.INSTANCE, EventOrder.AFTER, methodOwner);
+				tryMatch(EventType.INSTANCE, methodOwner, EventOrder.AFTER);
 			else
-				tryMatch(EventType.METHOD_CALL, methodName, currentTypes.length);
+				tryMatch(EventType.METHOD_CALL, methodName, numArgs);
 			break;
 		case INVOKESTATIC:
 		case INVOKEVIRTUAL:
 		case INVOKEINTERFACE:
-			tryMatch(EventType.METHOD_CALL, methodName, currentTypes.length);
+			tryMatch(EventType.METHOD_CALL, methodName, numArgs);
 			break;
 		}
 
@@ -236,22 +223,6 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		currentType = type;
 	}
 
-	private void tryMatch(EventType type, String of, String name, String desc, String owner) {
-		for (EventPatternMatcher m : mapped.get(type))
-			if (matchesFrom.get(m) && m.matchesOf(of))
-				addMonitors(m, name, desc, owner);
-
-		currentType = type;
-	}
-
-	private void tryMatch(EventType type, EventOrder order, String of) {
-		for (EventPatternMatcher m : mapped.get(type))
-			if (matchesFrom.get(m) && m.matchesOf(of))
-				addMonitors(m, order, of);
-
-		currentType = type;
-	}
-
 	private void tryMatch(EventType type, String of, int numArgs) {
 		for (EventPatternMatcher m : mapped.get(type))
 			if (matchesFrom.get(m) && m.matchesOf(of))
@@ -260,11 +231,27 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		currentType = type;
 	}
 
+	private void tryMatch(EventType type, String of, EventOrder order) {
+		for (EventPatternMatcher m : mapped.get(type))
+			if (matchesFrom.get(m) && m.matchesOf(of))
+				addMonitors(m, order, of);
+
+		currentType = type;
+	}
+
+	private void tryMatch(EventType type, String of, String name, String desc, String owner) {
+		for (EventPatternMatcher m : mapped.get(type))
+			if (matchesFrom.get(m) && m.matchesOf(of))
+				addMonitors(m, name, desc, owner);
+
+		currentType = type;
+	}
+
 	private void reset() {
 		beforeMonitors.clear();
 		afterMonitors.clear();
 		insteadMonitors.clear();
-		shouldGenerateLocal = shouldGenerateDup = false;
+		shouldGenerateLocal = shouldGenerateDup = shouldGenerateArgsArray = false;
 	}
 
 	private void addMonitors(EventPatternMatcher e) {
@@ -352,6 +339,11 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 				beforeMonitors.add(d);
 				break;
 			case AFTER:
+				if (e.getType() == EventType.METHOD_CALL) {
+					shouldGenerateArgsArray = true;
+					currentNumArgs = numArgs;
+				}
+
 				afterMonitors.add(d);
 				break;
 			case INSTEAD:
@@ -364,6 +356,12 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	private void insertBeforeMonitors() {
 		if (shouldGenerateLocal)
 			generatedLocal = captureLocal();
+
+		if (shouldGenerateArgsArray) {
+			LocalVariable[] vars = captureMethodArguments(currentNumArgs);
+			restoreMethodArguments(currentNumArgs, vars);
+			generatedArgsArray = vars[vars.length - 1].getIndex();
+		}
 
 		if (shouldGenerateDup)
 			super.visitInsn(DUP);
@@ -387,7 +385,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 			break;
 		case METHOD_CALL:
 			for (EventData e : beforeMonitors)
-				vititMethodCall(e);
+				visitMethodCallBefore(e);
 			break;
 		case RETURN:
 		case THROW:
@@ -424,7 +422,8 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 				visitStaticFieldWrite(e);
 			break;
 		case METHOD_CALL:
-
+			for (EventData e : afterMonitors)
+				visitMethodCallAfter(e);
 			break;
 		case INSTANCE:
 		case INSTANCE_ARRAY:
@@ -443,12 +442,14 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	private int captureLocal() {
-		super.visitInsn(DUP);
+		Type topType = getTopType();
 
-		String newTop = autobox();
+		if (topType.equals(Type.LONG_TYPE) || topType.equals(Type.DOUBLE_TYPE))
+			super.visitInsn(DUP2);
+		else
+			super.visitInsn(DUP);
 
-		if (newTop == null)
-			throw new IllegalStateException("Cannot create a local variable");
+		String newTop = autobox(topType);
 
 		int l = lvs.newLocal(Type.getObjectType(newTop));
 		super.visitVarInsn(ASTORE, l);
@@ -487,7 +488,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	private void visitTopWithAutobox(EventData e) {
-		autobox();
+		autobox(getTopType());
 		visitEventStartWithSwap(e);
 		visitEventEnd(e);
 	}
@@ -509,60 +510,74 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		visitEventEndWithType(e, e.getName());
 	}
 
-	// TO-DO: Add support for two-word values (long and double)
-	private void vititMethodCall(EventData e) {
-		LocalVariable[] localsIndices = new LocalVariable[e.getNumArgs()];
+	private void visitMethodCallBefore(EventData e) {
+		LocalVariable[] vars = captureMethodArguments(e.getNumArgs());
+		visitEventStart(e);
+		super.visitLdcInsn(e.getName());
+		visitEventEndWithArgs(e, vars[e.getNumArgs()].getIndex());
+		restoreMethodArguments(e.getNumArgs(), vars);
+	}
 
-		pushInt(e.getNumArgs());
+	private void visitMethodCallAfter(EventData e) {
+		visitEventStart(e);
+		super.visitLdcInsn(e.getName());
+		visitEventEndWithArgs(e, generatedArgsArray);
+	}
+
+	private LocalVariable[] captureMethodArguments(int numArgs) {
+		LocalVariable[] localsIndices = new LocalVariable[numArgs + 1];
+
+		pushInt(numArgs);
 		super.visitTypeInsn(ANEWARRAY, "java/lang/Object");
-
-		for (int i = 0; i < e.getNumArgs(); i++) {
-			super.visitInsn(DUP_X1);
-			super.visitInsn(SWAP);
-
-			Object top = getTop();
-
-			if (top instanceof Integer) {
-				super.visitInsn(DUP);
-
-				Pair<Integer, Integer> insns = getPrimitiveInsns((Integer) top);
-
-				int l = lvs.newLocal(getPrimitiveType((Integer) top));
-				super.visitVarInsn(insns.getKey(), l);
-
-				localsIndices[i] = new LocalVariable(l, insns.getValue());
-
-				autoboxWithoutDup();
-			}
-
-			System.out.println(stack);
-
-			pushInt(i);
-			super.visitInsn(SWAP);
-			super.visitInsn(AASTORE);
-
-			System.out.println(stack);
-		}
 
 		int arrLocal = lvs.newLocal(OBJECT_ARRAY_TYPE);
 		super.visitVarInsn(ASTORE, arrLocal);
 
-		visitEventStart(e);
-		super.visitLdcInsn(e.getName());
-		visitEventEndWithArgs(e, arrLocal);
+		Type topType;
+		boolean twoWords;
 
-		// Restore arguments on stack
-		for (int i = 0, n = e.getNumArgs() - 1; i < e.getNumArgs(); i++, n--) {
-			LocalVariable l = localsIndices[n];
-			if (l != null) {
-				super.visitVarInsn(l.getLoadInsn(), l.getIndex());
+		for (int i = numArgs - 1; i >= 0; i--) {
+			topType = getTopType();
+			twoWords = topType.equals(Type.LONG_TYPE) || topType.equals(Type.DOUBLE_TYPE);
+
+			if (twoWords)
+				super.visitInsn(DUP2);
+			else
+				super.visitInsn(DUP);
+
+			Pair<Integer, Integer> insns = getPrimitiveInsns(topType);
+
+			int l = lvs.newLocal(topType);
+			super.visitVarInsn(insns.getKey(), l);
+
+			localsIndices[i] = new LocalVariable(l, insns.getValue());
+
+			super.visitVarInsn(ALOAD, arrLocal);
+
+			if (twoWords) {
+				super.visitInsn(DUP_X2);
+				super.visitInsn(POP);
 			} else {
-				super.visitVarInsn(ALOAD, arrLocal);
-				pushInt(n);
-				super.visitInsn(AALOAD);
-				super.visitTypeInsn(CHECKCAST, currentTypes[i].getInternalName());
+				super.visitInsn(SWAP);
 			}
+
+			if (!insns.equals(REF_INSNS))
+				autoboxWithoutDup(topType);
+
+			pushInt(i);
+
+			super.visitInsn(SWAP);
+			super.visitInsn(AASTORE);
 		}
+
+		localsIndices[numArgs] = new LocalVariable(arrLocal, 0);
+
+		return localsIndices;
+	}
+
+	private void restoreMethodArguments(int numArgs, LocalVariable[] vars) {
+		for (int i = 0; i < numArgs; i++)
+			super.visitVarInsn(vars[i].getLoadInsn(), vars[i].getIndex());
 	}
 
 	private void visitEventStart(EventData e) {
@@ -698,7 +713,29 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		}
 	}
 
-	private Type getPrimitiveType(Integer i) {
+	private Type getTopType() {
+		Object v2 = getTop();
+
+		if (v2 instanceof String)
+			return Type.getObjectType((String) v2);
+
+		if (stack.size() > 1) {
+			Object v1 = stack.get(stack.size() - 2);
+
+			if (v1 instanceof Integer && v2 instanceof Integer && v2.equals(TOP)) {
+				Integer desc = (Integer) v1;
+
+				if (desc.equals(LONG))
+					return Type.LONG_TYPE;
+				else if (desc.equals(DOUBLE))
+					return Type.DOUBLE_TYPE;
+
+				throw new IllegalStateException("Cannot autobox TOP");
+			}
+		}
+
+		Integer i = (Integer) v2;
+
 		if (i.equals(INTEGER))
 			return Type.INT_TYPE;
 		else if (i.equals(FLOAT))
@@ -707,13 +744,17 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		throw new IllegalStateException("Should not reach this state");
 	}
 
-	private Pair<Integer, Integer> getPrimitiveInsns(Integer i) {
-		if (i.equals(INTEGER))
+	private Pair<Integer, Integer> getPrimitiveInsns(Type t) {
+		if (t.equals(Type.INT_TYPE))
 			return INTEGER_INSNS;
-		else if (i.equals(FLOAT))
+		else if (t.equals(Type.FLOAT_TYPE))
 			return FLOAT_INSNS;
+		else if (t.equals(Type.LONG_TYPE))
+			return LONG_INSNS;
+		else if (t.equals(Type.DOUBLE_TYPE))
+			return DOUBLE_INSNS;
 
-		throw new IllegalStateException("Should not reach this state");
+		return REF_INSNS;
 	}
 
 	/*
@@ -723,34 +764,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		if (desc.length() > 1)
 			return desc;
 
-		Pair<String, String> type = null;
-
-		switch (desc) {
-		case "Z":
-			type = TYPE_BOOLEAN;
-			break;
-		case "C":
-			type = TYPE_CHARACTER;
-			break;
-		case "B":
-			type = TYPE_BYTE;
-			break;
-		case "S":
-			type = TYPE_SHORT;
-			break;
-		case "I":
-			type = TYPE_INTEGER;
-			break;
-		case "F":
-			type = TYPE_FLOAT;
-			break;
-		case "J":
-			type = TYPE_LONG;
-			break;
-		case "D":
-			type = TYPE_DOUBLE;
-			break;
-		}
+		Pair<String, String> type = getPrimitiveClass(desc);
 
 		super.visitMethodInsn(INVOKESTATIC, type.getKey(), "valueOf", type.getValue(), false);
 
@@ -761,83 +775,51 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	 * Attempts to produce a boxed value from primitive on top of stack. Aware of
 	 * long/double taking two slots.
 	 */
-	private String autobox() {
-		Object v2 = getTop();
-
-		if (stack.size() > 1) {
-			Object v1 = stack.get(stack.size() - 2);
-
-			if (v1 instanceof Integer && v2 instanceof Integer && v2.equals(TOP)) {
-				Integer desc = (Integer) v1;
-
-				if (desc.equals(LONG)) {
-					super.visitInsn(DUP2);
-					super.visitMethodInsn(INVOKESTATIC, TYPE_LONG.getKey(), "valueOf", TYPE_LONG.getValue(), false);
-					return TYPE_LONG.getKey();
-				} else if (desc.equals(DOUBLE)) {
-					super.visitInsn(DUP2);
-					super.visitMethodInsn(INVOKESTATIC, TYPE_DOUBLE.getKey(), "valueOf", TYPE_DOUBLE.getValue(), false);
-					return TYPE_DOUBLE.getKey();
-				}
-
-				throw new IllegalStateException("Cannot autobox TOP");
-			}
-		}
-
-		super.visitInsn(DUP);
-
-		return autobox(v2);
-	}
-
-	/*
-	 * Attempts to produce a boxed value from primitive on top of stack. Accepts a
-	 * single stack entry.
-	 */
-	private String autobox(Object value) {
-		if (!(value instanceof Integer))
-			if (value instanceof String)
-				return (String) value;
-			else
-				throw new IllegalStateException("Cannot autobox a null value / label");
-
-		Integer desc = (Integer) value;
-
-		if (desc.equals(INTEGER)) {
+	private String autobox(Type type) {
+		if (type.equals(Type.LONG_TYPE)) {
+			super.visitInsn(DUP2);
+			super.visitMethodInsn(INVOKESTATIC, TYPE_LONG.getKey(), "valueOf", TYPE_LONG.getValue(), false);
+			return TYPE_LONG.getKey();
+		} else if (type.equals(Type.DOUBLE_TYPE)) {
+			super.visitInsn(DUP2);
+			super.visitMethodInsn(INVOKESTATIC, TYPE_DOUBLE.getKey(), "valueOf", TYPE_DOUBLE.getValue(), false);
+			return TYPE_DOUBLE.getKey();
+		} else if (type.equals(Type.INT_TYPE)) {
+			super.visitInsn(DUP);
 			super.visitMethodInsn(INVOKESTATIC, TYPE_INTEGER.getKey(), "valueOf", TYPE_INTEGER.getValue(), false);
 			return TYPE_INTEGER.getKey();
-		} else if (desc.equals(FLOAT)) {
+		} else if (type.equals(Type.FLOAT_TYPE)) {
+			super.visitInsn(DUP);
 			super.visitMethodInsn(INVOKESTATIC, TYPE_FLOAT.getKey(), "valueOf", TYPE_FLOAT.getValue(), false);
 			return TYPE_FLOAT.getKey();
 		}
 
-		throw new IllegalStateException("Should not reach this state");
+		return type.getInternalName();
 	}
 
 	/*
 	 * Attempts to produce a boxed value from primitive on top of stack. Aware of
 	 * long/double taking two slots. No duplication
 	 */
-	private String autoboxWithoutDup() {
-		Object v2 = getTop();
-
-		if (stack.size() > 1) {
-			Object v1 = stack.get(stack.size() - 2);
-
-			if (v1 instanceof Integer && v2 instanceof Integer && v2.equals(TOP)) {
-				Integer desc = (Integer) v1;
-
-				if (desc.equals(LONG)) {
-					super.visitMethodInsn(INVOKESTATIC, TYPE_LONG.getKey(), "valueOf", TYPE_LONG.getValue(), false);
-					return TYPE_LONG.getKey();
-				} else if (desc.equals(DOUBLE)) {
-					super.visitMethodInsn(INVOKESTATIC, TYPE_DOUBLE.getKey(), "valueOf", TYPE_DOUBLE.getValue(), false);
-					return TYPE_DOUBLE.getKey();
-				}
-
-				throw new IllegalStateException("Cannot autobox TOP");
-			}
+	private String autoboxWithoutDup(Type type) {
+		if (type.equals(Type.LONG_TYPE)) {
+			super.visitMethodInsn(INVOKESTATIC, TYPE_LONG.getKey(), "valueOf", TYPE_LONG.getValue(), false);
+			return TYPE_LONG.getKey();
+		} else if (type.equals(Type.DOUBLE_TYPE)) {
+			super.visitMethodInsn(INVOKESTATIC, TYPE_DOUBLE.getKey(), "valueOf", TYPE_DOUBLE.getValue(), false);
+			return TYPE_DOUBLE.getKey();
+		} else if (type.equals(Type.INT_TYPE)) {
+			super.visitMethodInsn(INVOKESTATIC, TYPE_INTEGER.getKey(), "valueOf", TYPE_INTEGER.getValue(), false);
+			return TYPE_INTEGER.getKey();
+		} else if (type.equals(Type.FLOAT_TYPE)) {
+			super.visitMethodInsn(INVOKESTATIC, TYPE_FLOAT.getKey(), "valueOf", TYPE_FLOAT.getValue(), false);
+			return TYPE_FLOAT.getKey();
 		}
 
-		return autobox(v2);
+		return type.getInternalName();
+	}
+
+	private String toDots(String s) {
+		return s.replace('/', '.');
 	}
 }
