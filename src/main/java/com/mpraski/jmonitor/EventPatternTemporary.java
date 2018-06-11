@@ -1,12 +1,10 @@
-package com.mpraski.jmonitor.pattern;
+package com.mpraski.jmonitor;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-
-import com.mpraski.jmonitor.event.EventType;
 
 public final class EventPatternTemporary implements Cloneable {
 	private final String tag;

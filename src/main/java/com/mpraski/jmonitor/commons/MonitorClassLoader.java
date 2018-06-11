@@ -1,4 +1,4 @@
-package com.mpraski.jmonitor.common;
+package com.mpraski.jmonitor.commons;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,11 +12,12 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 
+import com.mpraski.jmonitor.EventPatternCompiler;
+import com.mpraski.jmonitor.EventPatternDefinitions;
+import com.mpraski.jmonitor.EventPatternMatcher;
+import com.mpraski.jmonitor.EventType;
+import com.mpraski.jmonitor.ResolverWriter;
 import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
-import com.mpraski.jmonitor.event.EventType;
-import com.mpraski.jmonitor.pattern.EventPatternCompiler;
-import com.mpraski.jmonitor.pattern.EventPatternDefinitions;
-import com.mpraski.jmonitor.pattern.EventPatternMatcher;
 
 public final class MonitorClassLoader extends ClassLoader {
 	static {
@@ -30,7 +31,7 @@ public final class MonitorClassLoader extends ClassLoader {
 	private final List<EventPatternMatcher> matchers;
 	private final Map<EventType, List<EventPatternMatcher>> mapped;
 
-	private final static String RESOLVER_CLASS = "com.mpraski.jmonitor.common.Resolver";
+	private final static String RESOLVER_CLASS = "com.mpraski.jmonitor.Resolver";
 
 	public MonitorClassLoader(ClassLoader parent, String definitionsName) {
 		super(parent);

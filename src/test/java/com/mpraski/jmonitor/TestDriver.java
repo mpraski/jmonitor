@@ -3,7 +3,7 @@ package com.mpraski.jmonitor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import com.mpraski.jmonitor.common.MonitorClassLoader;
+import com.mpraski.jmonitor.commons.MonitorClassLoader;
 
 public class TestDriver {
 	public static void main(String[] args) {

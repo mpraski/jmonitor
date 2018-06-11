@@ -27,10 +27,10 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.AnalyzerAdapter;
 import org.objectweb.asm.commons.LocalVariablesSorter;
 
-import com.mpraski.jmonitor.event.EventType;
-import com.mpraski.jmonitor.pattern.EventMonitor;
-import com.mpraski.jmonitor.pattern.EventOrder;
-import com.mpraski.jmonitor.pattern.EventPatternMatcher;
+import com.mpraski.jmonitor.EventMonitor;
+import com.mpraski.jmonitor.EventOrder;
+import com.mpraski.jmonitor.EventPatternMatcher;
+import com.mpraski.jmonitor.EventType;
 import com.mpraski.jmonitor.util.Pair;
 
 /*
@@ -606,9 +606,9 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	private void visitEventStart(EventData e) {
-		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/common/Resolver", e.getMonitor(),
+		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/Resolver", e.getMonitor(),
 				e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClassType : monitorClassType);
-		super.visitTypeInsn(NEW, "com/mpraski/jmonitor/event/Event");
+		super.visitTypeInsn(NEW, "com/mpraski/jmonitor/Event");
 		super.visitInsn(DUP);
 
 		if (e.getTag() == null)
@@ -616,15 +616,15 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		else
 			super.visitLdcInsn(e.getTag());
 
-		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/event/EventType", eventType(e.getType()),
-				"Lcom/mpraski/jmonitor/event/EventType;");
+		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/EventType", eventType(e.getType()),
+				"Lcom/mpraski/jmonitor/EventType;");
 	}
 
 	private void visitEventStartWithSwap(EventData e) {
-		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/common/Resolver", e.getMonitor(),
+		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/Resolver", e.getMonitor(),
 				e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClassType : monitorClassType);
 		super.visitInsn(SWAP);
-		super.visitTypeInsn(NEW, "com/mpraski/jmonitor/event/Event");
+		super.visitTypeInsn(NEW, "com/mpraski/jmonitor/Event");
 		super.visitInsn(DUP_X1);
 		super.visitInsn(SWAP);
 
@@ -635,8 +635,8 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 		super.visitInsn(SWAP);
 
-		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/event/EventType", eventType(e.getType()),
-				"Lcom/mpraski/jmonitor/event/EventType;");
+		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/EventType", eventType(e.getType()),
+				"Lcom/mpraski/jmonitor/EventType;");
 
 		super.visitInsn(SWAP);
 	}
@@ -647,12 +647,12 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		super.visitMethodInsn(INVOKESTATIC, "java/lang/Thread", "currentThread", "()Ljava/lang/Thread;", false);
 		super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Thread", "getStackTrace", "()[Ljava/lang/StackTraceElement;",
 				false);
-		super.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/event/Event", "<init>",
-				"(Ljava/lang/String;Lcom/mpraski/jmonitor/event/EventType;Ljava/lang/Object;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
+		super.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/Event", "<init>",
+				"(Ljava/lang/String;Lcom/mpraski/jmonitor/EventType;Ljava/lang/Object;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
 				false);
 		super.visitMethodInsn(INVOKEINTERFACE, e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClass : monitorClass,
 				e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClassFunc : monitorClassFunc,
-				"(Lcom/mpraski/jmonitor/event/Event;)V", true);
+				"(Lcom/mpraski/jmonitor/Event;)V", true);
 	}
 
 	private void visitEventEndWithArg(EventData e, int localArg) {
@@ -666,12 +666,12 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		super.visitMethodInsn(INVOKESTATIC, "java/lang/Thread", "currentThread", "()Ljava/lang/Thread;", false);
 		super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Thread", "getStackTrace", "()[Ljava/lang/StackTraceElement;",
 				false);
-		super.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/event/Event", "<init>",
-				"(Ljava/lang/String;Lcom/mpraski/jmonitor/event/EventType;Ljava/lang/Object;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
+		super.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/Event", "<init>",
+				"(Ljava/lang/String;Lcom/mpraski/jmonitor/EventType;Ljava/lang/Object;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
 				false);
 		super.visitMethodInsn(INVOKEINTERFACE, e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClass : monitorClass,
 				e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClassFunc : monitorClassFunc,
-				"(Lcom/mpraski/jmonitor/event/Event;)V", true);
+				"(Lcom/mpraski/jmonitor/Event;)V", true);
 	}
 
 	private void visitEventEndWithArgs(EventData e, int arrLocal) {
@@ -680,12 +680,12 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		super.visitMethodInsn(INVOKESTATIC, "java/lang/Thread", "currentThread", "()Ljava/lang/Thread;", false);
 		super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Thread", "getStackTrace", "()[Ljava/lang/StackTraceElement;",
 				false);
-		super.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/event/Event", "<init>",
-				"(Ljava/lang/String;Lcom/mpraski/jmonitor/event/EventType;Ljava/lang/Object;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
+		super.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/Event", "<init>",
+				"(Ljava/lang/String;Lcom/mpraski/jmonitor/EventType;Ljava/lang/Object;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
 				false);
 		super.visitMethodInsn(INVOKEINTERFACE, e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClass : monitorClass,
 				e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClassFunc : monitorClassFunc,
-				"(Lcom/mpraski/jmonitor/event/Event;)V", true);
+				"(Lcom/mpraski/jmonitor/Event;)V", true);
 	}
 
 	private void visitEventEndWithType(EventData e, String desc) {
@@ -699,12 +699,12 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		super.visitMethodInsn(INVOKESTATIC, "java/lang/Thread", "currentThread", "()Ljava/lang/Thread;", false);
 		super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Thread", "getStackTrace", "()[Ljava/lang/StackTraceElement;",
 				false);
-		super.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/event/Event", "<init>",
-				"(Ljava/lang/String;Lcom/mpraski/jmonitor/event/EventType;Ljava/lang/Object;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
+		super.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/Event", "<init>",
+				"(Ljava/lang/String;Lcom/mpraski/jmonitor/EventType;Ljava/lang/Object;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
 				false);
 		super.visitMethodInsn(INVOKEINTERFACE, e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClass : monitorClass,
 				e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClassFunc : monitorClassFunc,
-				"(Lcom/mpraski/jmonitor/event/Event;)V", true);
+				"(Lcom/mpraski/jmonitor/Event;)V", true);
 	}
 
 	private void pushInt(int i) {
@@ -848,7 +848,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		return type.getInternalName();
 	}
 
-	private String toDots(String s) {
+	private static String toDots(String s) {
 		return s.replace('/', '.');
 	}
 }

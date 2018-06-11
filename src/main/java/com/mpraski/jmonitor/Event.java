@@ -1,4 +1,4 @@
-package com.mpraski.jmonitor.event;
+package com.mpraski.jmonitor;
 
 import java.util.Objects;
 

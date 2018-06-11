@@ -3,16 +3,16 @@ package com.mpraski.jmonitor.util;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import com.mpraski.jmonitor.event.EventType;
+import com.mpraski.jmonitor.EventType;
 
 public final class Constants implements Opcodes {
-	public static final String monitorClassType = "Lcom/mpraski/jmonitor/common/Monitor;";
-	public static final String insteadMonitorClassType = "Lcom/mpraski/jmonitor/common/InsteadMonitor;";
-	public static final String monitorClass = "com/mpraski/jmonitor/common/Monitor";
-	public static final String insteadMonitorClass = "com/mpraski/jmonitor/common/InsteadMonitor";
+	public static final String monitorClassType = "Lcom/mpraski/jmonitor/Monitor;";
+	public static final String insteadMonitorClassType = "Lcom/mpraski/jmonitor/InsteadMonitor;";
+	public static final String monitorClass = "com/mpraski/jmonitor/Monitor";
+	public static final String insteadMonitorClass = "com/mpraski/jmonitor/InsteadMonitor";
 	public static final String monitorClassFunc = "onEvent";
 	public static final String insteadMonitorClassFunc = "doInstead";
-	public static final Type typeOfEvent = Type.getObjectType("com/mpraski/jmonitor/event/Event");
+	public static final Type typeOfEvent = Type.getObjectType("com/mpraski/jmonitor/Event");
 
 	public static final Pair<String, String> TYPE_BOOLEAN = new Pair<>("java/lang/Boolean", "(Z)Ljava/lang/Boolean;");
 	public static final Pair<String, String> TYPE_CHARACTER = new Pair<>("java/lang/Character",

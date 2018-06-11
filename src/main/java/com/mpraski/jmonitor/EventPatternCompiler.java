@@ -1,4 +1,4 @@
-package com.mpraski.jmonitor.pattern;
+package com.mpraski.jmonitor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import com.mpraski.jmonitor.event.EventType;
 
 public final class EventPatternCompiler {
 	private final Set<EventPatternTemporary> matchers = new HashSet<>();

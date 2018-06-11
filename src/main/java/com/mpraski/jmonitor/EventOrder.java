@@ -1,4 +1,4 @@
-package com.mpraski.jmonitor.pattern;
+package com.mpraski.jmonitor;
 
 public enum EventOrder {
 	BEFORE, AFTER, INSTEAD

@@ -1,8 +1,6 @@
-package com.mpraski.jmonitor.pattern;
+package com.mpraski.jmonitor;
 
 import java.util.Objects;
-
-import com.mpraski.jmonitor.event.EventType;
 
 public final class EventPattern implements Cloneable {
 	private String tag;

@@ -10,8 +10,8 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.LocalVariablesSorter;
 
-import com.mpraski.jmonitor.event.EventType;
-import com.mpraski.jmonitor.pattern.EventPatternMatcher;
+import com.mpraski.jmonitor.EventPatternMatcher;
+import com.mpraski.jmonitor.EventType;
 
 public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 

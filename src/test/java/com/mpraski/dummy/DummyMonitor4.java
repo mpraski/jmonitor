@@ -1,7 +1,7 @@
 package com.mpraski.dummy;
 
-import com.mpraski.jmonitor.common.Monitor;
-import com.mpraski.jmonitor.event.Event;
+import com.mpraski.jmonitor.Event;
+import com.mpraski.jmonitor.Monitor;
 
 public class DummyMonitor4 implements Monitor {
 

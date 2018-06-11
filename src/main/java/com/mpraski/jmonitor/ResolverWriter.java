@@ -1,4 +1,4 @@
-package com.mpraski.jmonitor.common;
+package com.mpraski.jmonitor;
 
 import static com.mpraski.jmonitor.util.Constants.insteadMonitorClassType;
 import static com.mpraski.jmonitor.util.Constants.monitorClassType;
@@ -11,9 +11,6 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import com.mpraski.jmonitor.pattern.EventMonitor;
-import com.mpraski.jmonitor.pattern.EventOrder;
-
 public class ResolverWriter implements Opcodes {
 
 	public static byte[] write(Set<EventMonitor> monitors) {
@@ -23,7 +20,7 @@ public class ResolverWriter implements Opcodes {
 		FieldVisitor fieldVisitor;
 		MethodVisitor methodVisitor;
 
-		classWriter.visit(V1_8, ACC_PUBLIC | ACC_FINAL | ACC_SUPER, "com/mpraski/jmonitor/common/Resolver", null,
+		classWriter.visit(V1_8, ACC_PUBLIC | ACC_FINAL | ACC_SUPER, "com/mpraski/jmonitor/Resolver", null,
 				"java/lang/Object", null);
 
 		classWriter.visitSource("Resolver.java", null);
@@ -71,7 +68,7 @@ public class ResolverWriter implements Opcodes {
 			methodVisitor.visitTypeInsn(NEW, internalName);
 			methodVisitor.visitInsn(DUP);
 			methodVisitor.visitMethodInsn(INVOKESPECIAL, internalName, "<init>", "()V", false);
-			methodVisitor.visitFieldInsn(PUTSTATIC, "com/mpraski/jmonitor/common/Resolver", fieldName, mClass);
+			methodVisitor.visitFieldInsn(PUTSTATIC, "com/mpraski/jmonitor/Resolver", fieldName, mClass);
 		}
 
 		methodVisitor.visitInsn(RETURN);

@@ -1,4 +1,4 @@
-package com.mpraski.jmonitor.pattern;
+package com.mpraski.jmonitor;
 
 import java.util.List;
 

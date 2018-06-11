@@ -3,9 +3,6 @@ package com.mpraski.jmonitor;
 import java.util.Arrays;
 import java.util.List;
 
-import com.mpraski.jmonitor.pattern.EventPattern;
-import com.mpraski.jmonitor.pattern.EventPatternDefinitions;
-
 public class TestDefinitions implements EventPatternDefinitions {
 
 	@Override

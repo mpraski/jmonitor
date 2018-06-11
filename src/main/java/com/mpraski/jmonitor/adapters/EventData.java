@@ -2,8 +2,8 @@ package com.mpraski.jmonitor.adapters;
 
 import java.util.Objects;
 
-import com.mpraski.jmonitor.event.EventType;
-import com.mpraski.jmonitor.pattern.EventOrder;
+import com.mpraski.jmonitor.EventOrder;
+import com.mpraski.jmonitor.EventType;
 
 public final class EventData {
 	public EventData(EventType type, String tag, String monitor, EventOrder order) {
