@@ -489,7 +489,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	private int captureLocal() {
 		Type topType = getTopType();
 
-		if (isTwoWords(topType))
+		if (takesTwoWords(topType))
 			super.visitInsn(DUP2);
 		else
 			super.visitInsn(DUP);
@@ -610,7 +610,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 		for (int i = numArgs - 1; i >= 0; i--) {
 			topType = getTopType();
-			twoWords = isTwoWords(topType);
+			twoWords = takesTwoWords(topType);
 
 			if (twoWords)
 				super.visitInsn(DUP2);
@@ -835,7 +835,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		if (stack.size() > 1) {
 			Object v1 = stack.get(stack.size() - 2);
 
-			if (v1 instanceof Integer && v2 instanceof Integer && v2.equals(TOP)) {
+			if (v1 instanceof Integer && v2.equals(TOP)) {
 				Integer desc = (Integer) v1;
 
 				if (desc.equals(LONG))
@@ -899,22 +899,22 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	 * Pushes a boxed value of the top of the stack. Does not duplicate the raw
 	 * value.
 	 */
-	private String boxWithoutDup(Type type) {
+	private Type boxWithoutDup(Type type) {
 		if (type.equals(Type.LONG_TYPE)) {
 			super.visitMethodInsn(INVOKESTATIC, TYPE_LONG.getKey(), "valueOf", TYPE_LONG.getValue(), false);
-			return TYPE_LONG.getKey();
+			return LONG_TYPE;
 		} else if (type.equals(Type.DOUBLE_TYPE)) {
 			super.visitMethodInsn(INVOKESTATIC, TYPE_DOUBLE.getKey(), "valueOf", TYPE_DOUBLE.getValue(), false);
-			return TYPE_DOUBLE.getKey();
+			return DOUBLE_TYPE;
 		} else if (type.equals(Type.INT_TYPE)) {
 			super.visitMethodInsn(INVOKESTATIC, TYPE_INTEGER.getKey(), "valueOf", TYPE_INTEGER.getValue(), false);
-			return TYPE_INTEGER.getKey();
+			return INTEGER_TYPE;
 		} else if (type.equals(Type.FLOAT_TYPE)) {
 			super.visitMethodInsn(INVOKESTATIC, TYPE_FLOAT.getKey(), "valueOf", TYPE_FLOAT.getValue(), false);
-			return TYPE_FLOAT.getKey();
+			return FLOAT_TYPE;
 		}
 
-		return type.getInternalName();
+		return type;
 	}
 
 	private void unbox(Type type) {
@@ -954,7 +954,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		return s.replace('/', '.');
 	}
 
-	private static boolean isTwoWords(Type type) {
+	private static boolean takesTwoWords(Type type) {
 		return type.equals(Type.LONG_TYPE) || type.equals(Type.DOUBLE_TYPE);
 	}
 }

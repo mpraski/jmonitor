@@ -1,5 +1,7 @@
 package com.mpraski.dummy;
 
+import java.math.BigInteger;
+
 public class Dummy {
 	private String lel = "oh my my";
 	private int lilp = 1;
@@ -25,6 +27,7 @@ public class Dummy {
 		d.readWop();
 		d.writeObject();
 		d.doCall();
+		System.out.println(d.someMethod2());
 	}
 
 	public void sayHello() {
@@ -92,8 +95,8 @@ public class Dummy {
 		System.out.println("nope");
 	}
 
-	public Object someMethod2(Object a) {
-		return null;
+	public BigInteger someMethod2() {
+		return new BigInteger("1000");
 	}
 
 	public void doCall() {

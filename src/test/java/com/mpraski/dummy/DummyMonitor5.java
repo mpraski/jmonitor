@@ -9,7 +9,7 @@ public class DummyMonitor5 implements InsteadMonitor {
 	public Object doInstead(Event event) {
 		System.out.println("Catching event5: " + event);
 
-		return new Integer(100);
+		return new Integer(10045);
 	}
 
 }

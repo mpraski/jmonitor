@@ -33,8 +33,9 @@ public class TestDefinitions implements EventPatternDefinitions {
 		EventPattern p16 = EventPattern.onReturn().from("(.*)writeInt").doInstead("com.mpraski.dummy.DummyMonitor5");
 		EventPattern p17 = EventPattern.onMonitorEnter().from("(.*)writeMumbo").of("com.mpraski.dummy.Dummy")
 				.doInstead("com.mpraski.dummy.DummyMonitor6");
+		EventPattern p18 = EventPattern.onReturn().from("(.*)someMethod2").doInstead("com.mpraski.dummy.DummyMonitor7");
 
-		return Arrays.asList(p3, p6, p8, p10, p12, p13, p14, p15, p16, p17);
+		return Arrays.asList(p3, p6, p8, p10, p12, p13, p14, p15, p16, p17, p18);
 	}
 
 }
