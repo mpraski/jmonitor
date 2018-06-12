@@ -32,14 +32,20 @@ public final class Event {
 	// Call stack of the thread of the methods that caused the event
 	private final StackTraceElement[] callstack;
 
-	private Object result;
+	private InsteadAction action;
 
 	public Object passThrough() {
-		return result;
+		if (action == null)
+			throw new NullPointerException("Action is null");
+
+		return action.doAction(null);
 	}
 
-	public Object passThrough(Object[] args) {
-		return result;
+	public Object passThrough(Object[] arguments) {
+		if (action == null)
+			throw new NullPointerException("Action is null");
+
+		return action.doAction(arguments);
 	}
 
 	public String getTag() {
@@ -72,6 +78,10 @@ public final class Event {
 
 	public StackTraceElement[] getCallstack() {
 		return callstack;
+	}
+
+	public void setAction(InsteadAction action) {
+		this.action = action;
 	}
 
 	@Override

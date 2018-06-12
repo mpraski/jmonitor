@@ -48,11 +48,11 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	/*
 	 * Used to add local variables in cases where certain values (e.g. method
-	 * arguments, event args array) need to be preserved.
+	 * arguments, event arguments array) need to be preserved.
 	 */
 	private final LocalVariablesSorter sorter;
 
-	private final String thisName, thisDesc, thisSource;
+	private final String thisName, thisDesc, thisRet, thisSource;
 	private final Map<EventType, List<EventPatternMatcher>> mapped;
 	private final Map<EventPatternMatcher, Boolean> matchesFrom;
 
@@ -79,6 +79,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 		this.thisName = toDots(owner) + '.' + name;
 		this.thisDesc = desc;
+		this.thisRet = toDots(Type.getMethodType(desc).getReturnType().getInternalName());
 		this.thisSource = source;
 		this.sorter = lvs;
 		this.mapped = mapped;
@@ -97,7 +98,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		this.eventsAfter = eventsAfter;
 		this.eventsInstead = eventsInstead;
 
-		System.out.println("Inside " + thisName + " | " + thisDesc);
+		System.out.println("Visiting " + thisName + " | " + thisDesc);
 	}
 
 	@Override
@@ -109,10 +110,10 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		case LRETURN:
 		case FRETURN:
 		case DRETURN:
-			tryMatch(EventType.RETURN, getTopType().getInternalName());
+			tryMatch(EventType.RETURN, thisRet);
 			break;
 		case ARETURN:
-			tryMatch(EventType.RETURN, toDots((String) getTop()));
+			tryMatch(EventType.RETURN, thisRet);
 			break;
 		case RETURN:
 			tryMatch(EventType.RETURN);
@@ -156,6 +157,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		}
 
 		instrumentBefore();
+		instrumentInstead();
 		super.visitFieldInsn(opcode, owner, name, desc);
 		instrumentAfter();
 	}
@@ -200,6 +202,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		}
 
 		instrumentBefore();
+		instrumentInstead();
 		super.visitTypeInsn(opcode, desc);
 		instrumentAfter();
 	}
@@ -227,6 +230,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		}
 
 		instrumentBefore();
+		instrumentInstead();
 		super.visitMethodInsn(opcode, owner, name, desc, isInterface);
 		instrumentAfter();
 	}
@@ -279,6 +283,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	private void reset() {
+		currentType = null;
 		eventsBefore.clear();
 		eventsAfter.clear();
 		eventsInstead.clear();
@@ -435,8 +440,14 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 		switch (currentType) {
 		case RETURN:
+			eventsInstead.forEach(this::visitReturnInstead);
+			break;
 		case THROW:
-			eventsInstead.forEach(this::visitTopInstead);
+			eventsInstead.forEach(this::visitThrowInstead);
+			break;
+		case MONITOR_ENTER:
+		case MONITOR_EXIT:
+			eventsInstead.forEach(this::visitTopWithSwap);
 			break;
 		}
 	}
@@ -483,7 +494,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		else
 			super.visitInsn(DUP);
 
-		int l = sorter.newLocal(autobox(topType));
+		int l = sorter.newLocal(box(topType));
 		super.visitVarInsn(ASTORE, l);
 
 		return l;
@@ -493,7 +504,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		visitEventStart(e);
 		super.visitVarInsn(ALOAD, 0);
 		super.visitFieldInsn(GETFIELD, e.getOwner(), e.getName(), e.getDesc());
-		autobox(e.getDesc());
+		box(e.getDesc());
 		visitEventEnd(e);
 	}
 
@@ -501,26 +512,26 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		visitEventStart(e);
 		super.visitVarInsn(ALOAD, 0);
 		super.visitFieldInsn(GETFIELD, e.getOwner(), e.getName(), e.getDesc());
-		autobox(e.getDesc());
+		box(e.getDesc());
 		visitEventEndWithArg(e, generatedLocal);
 	}
 
 	private void visitStaticFieldRead(EventData e) {
 		visitEventStart(e);
 		super.visitFieldInsn(GETSTATIC, e.getOwner(), e.getName(), e.getDesc());
-		autobox(e.getDesc());
+		box(e.getDesc());
 		visitEventEnd(e);
 	}
 
 	private void visitStaticFieldWrite(EventData e) {
 		visitEventStart(e);
 		super.visitFieldInsn(GETSTATIC, e.getOwner(), e.getName(), e.getDesc());
-		autobox(e.getDesc());
+		box(e.getDesc());
 		visitEventEndWithArg(e, generatedLocal);
 	}
 
 	private void visitTopWithAutobox(EventData e) {
-		autobox(getTopType());
+		box(getTopType());
 		visitEventStartWithSwap(e);
 		visitEventEnd(e);
 	}
@@ -550,10 +561,10 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		restoreMethodArguments(e.getNumArgs(), vars);
 	}
 
-	private void visitTopInstead(EventData e) {
+	private void visitReturnInstead(EventData e) {
 		Type oldType = getTopType();
 
-		autoboxWithoutDup(oldType);
+		boxWithoutDup(oldType);
 
 		visitEventStartWithSwap(e);
 		visitEventEnd(e);
@@ -562,6 +573,15 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 			super.visitTypeInsn(CHECKCAST, oldType.getInternalName());
 		else
 			unbox(oldType);
+	}
+
+	private void visitThrowInstead(EventData e) {
+		Type oldType = getTopType();
+
+		visitEventStartWithSwap(e);
+		visitEventEnd(e);
+
+		super.visitTypeInsn(CHECKCAST, oldType.getInternalName());
 	}
 
 	private void visitMethodCallAfter(EventData e) {
@@ -614,7 +634,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 			}
 
 			if (!insns.equals(REF_INSNS))
-				autoboxWithoutDup(topType);
+				boxWithoutDup(topType);
 
 			pushInt(i);
 
@@ -706,11 +726,11 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		super.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/Event", "<init>",
 				"(Ljava/lang/String;Lcom/mpraski/jmonitor/EventType;Lcom/mpraski/jmonitor/EventOrder;Ljava/lang/String;ILjava/lang/Object;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
 				false);
-		super.visitMethodInsn(INVOKEINTERFACE, e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClass : monitorClass,
-				e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClassFunc : monitorClassFunc,
-				e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClassFuncType : monitorClassFuncType, true);
-		// System.out.println("rder in end: " + (e.getOrder() == EventOrder.INSTEAD ?
-		// insteadMonitorClass : monitorClass));
+		if (e.getOrder() == EventOrder.INSTEAD)
+			super.visitMethodInsn(INVOKEINTERFACE, insteadMonitorClass, insteadMonitorClassFunc,
+					insteadMonitorClassFuncType, true);
+		else
+			super.visitMethodInsn(INVOKEINTERFACE, monitorClass, monitorClassFunc, monitorClassFuncType, true);
 	}
 
 	private void visitEventEndWithArg(EventData e, int localArg) {
@@ -727,9 +747,11 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		super.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/Event", "<init>",
 				"(Ljava/lang/String;Lcom/mpraski/jmonitor/EventType;Lcom/mpraski/jmonitor/EventOrder;Ljava/lang/String;ILjava/lang/Object;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
 				false);
-		super.visitMethodInsn(INVOKEINTERFACE, e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClass : monitorClass,
-				e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClassFunc : monitorClassFunc,
-				"(Lcom/mpraski/jmonitor/Event;)V", true);
+		if (e.getOrder() == EventOrder.INSTEAD)
+			super.visitMethodInsn(INVOKEINTERFACE, insteadMonitorClass, insteadMonitorClassFunc,
+					insteadMonitorClassFuncType, true);
+		else
+			super.visitMethodInsn(INVOKEINTERFACE, monitorClass, monitorClassFunc, monitorClassFuncType, true);
 	}
 
 	private void visitEventEndWithArgs(EventData e, int arrLocal) {
@@ -741,9 +763,11 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		super.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/Event", "<init>",
 				"(Ljava/lang/String;Lcom/mpraski/jmonitor/EventType;Lcom/mpraski/jmonitor/EventOrder;Ljava/lang/String;ILjava/lang/Object;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
 				false);
-		super.visitMethodInsn(INVOKEINTERFACE, e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClass : monitorClass,
-				e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClassFunc : monitorClassFunc,
-				"(Lcom/mpraski/jmonitor/Event;)V", true);
+		if (e.getOrder() == EventOrder.INSTEAD)
+			super.visitMethodInsn(INVOKEINTERFACE, insteadMonitorClass, insteadMonitorClassFunc,
+					insteadMonitorClassFuncType, true);
+		else
+			super.visitMethodInsn(INVOKEINTERFACE, monitorClass, monitorClassFunc, monitorClassFuncType, true);
 	}
 
 	private void visitEventEndWithType(EventData e, String desc) {
@@ -760,9 +784,11 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		super.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/Event", "<init>",
 				"(Ljava/lang/String;Lcom/mpraski/jmonitor/EventType;Lcom/mpraski/jmonitor/EventOrder;Ljava/lang/String;ILjava/lang/Object;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
 				false);
-		super.visitMethodInsn(INVOKEINTERFACE, e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClass : monitorClass,
-				e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClassFunc : monitorClassFunc,
-				"(Lcom/mpraski/jmonitor/Event;)V", true);
+		if (e.getOrder() == EventOrder.INSTEAD)
+			super.visitMethodInsn(INVOKEINTERFACE, insteadMonitorClass, insteadMonitorClassFunc,
+					insteadMonitorClassFuncType, true);
+		else
+			super.visitMethodInsn(INVOKEINTERFACE, monitorClass, monitorClassFunc, monitorClassFuncType, true);
 	}
 
 	private void pushInt(int i) {
@@ -816,8 +842,6 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 					return Type.LONG_TYPE;
 				else if (desc.equals(DOUBLE))
 					return Type.DOUBLE_TYPE;
-
-				throw new IllegalStateException("Cannot autobox TOP");
 			}
 		}
 
@@ -828,14 +852,14 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		else if (i.equals(FLOAT))
 			return Type.FLOAT_TYPE;
 
-		throw new IllegalStateException("Should not reach this state");
+		throw new IllegalStateException("Neither a reference nor a primitive");
 	}
 
 	/*
 	 * Attempts to produce a boxed value from descriptor of type of the value on top
 	 * of the stack.
 	 */
-	private String autobox(String desc) {
+	private String box(String desc) {
 		if (desc.length() > 1)
 			return desc;
 
@@ -849,7 +873,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	/*
 	 * Pushes a boxed value of the top of the stack.
 	 */
-	private Type autobox(Type type) {
+	private Type box(Type type) {
 		if (type.equals(Type.LONG_TYPE)) {
 			super.visitInsn(DUP2);
 			super.visitMethodInsn(INVOKESTATIC, TYPE_LONG.getKey(), "valueOf", TYPE_LONG.getValue(), false);
@@ -875,7 +899,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	 * Pushes a boxed value of the top of the stack. Does not duplicate the raw
 	 * value.
 	 */
-	private String autoboxWithoutDup(Type type) {
+	private String boxWithoutDup(Type type) {
 		if (type.equals(Type.LONG_TYPE)) {
 			super.visitMethodInsn(INVOKESTATIC, TYPE_LONG.getKey(), "valueOf", TYPE_LONG.getValue(), false);
 			return TYPE_LONG.getKey();

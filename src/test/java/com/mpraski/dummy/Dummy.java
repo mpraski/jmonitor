@@ -92,6 +92,10 @@ public class Dummy {
 		System.out.println("nope");
 	}
 
+	public Object someMethod2(Object a) {
+		return null;
+	}
+
 	public void doCall() {
 		someMethod(12.543543, true, "asdsa", 40);
 		nothingToSay();
