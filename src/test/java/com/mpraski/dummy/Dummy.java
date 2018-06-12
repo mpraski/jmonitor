@@ -14,7 +14,7 @@ public class Dummy {
 		d.lol();
 		d.lil();
 		d.setLol();
-		d.writeInt();
+		System.out.println("Showing int: " + d.writeInt());
 		try {
 			d.writeMumbo(false);
 		} catch (Exception e) {
@@ -53,12 +53,16 @@ public class Dummy {
 		return wop;
 	}
 
+	public <T> T doShit(T args) {
+		return args;
+	}
+
 	public void writeWop(String s) {
 		wop = s;
 	}
 
 	public int writeInt() {
-		return gosh;
+		return 52;
 	}
 
 	public double writeMumbo(boolean lol) throws Exception {
@@ -80,7 +84,7 @@ public class Dummy {
 		return new Object();
 	}
 
-	public void someMethod(double a, boolean b, String c) {
+	public void someMethod(double a, boolean b, String c, int d) {
 		System.out.println("someMethod(" + a + ", " + b + ", " + c + ")");
 	}
 
@@ -89,7 +93,7 @@ public class Dummy {
 	}
 
 	public void doCall() {
-		someMethod(12.543543, true, "asdsa");
+		someMethod(12.543543, true, "asdsa", 40);
 		nothingToSay();
 	}
 }

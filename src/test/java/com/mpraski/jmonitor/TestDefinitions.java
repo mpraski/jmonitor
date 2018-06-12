@@ -11,7 +11,7 @@ public class TestDefinitions implements EventPatternDefinitions {
 				.setTag("tagg");
 		EventPattern p2 = EventPattern.onFieldRead().of("lilp").from("l(.*)")
 				.doAfter("com.mpraski.dummy.DummyMonitor2");
-		EventPattern p3 = EventPattern.onFieldWrite().of("lel").from("setLol")
+		EventPattern p3 = EventPattern.onFieldWrite().of("(.*)lel").from("(.*)setLol")
 				.doBefore("com.mpraski.dummy.DummyMonitor2").setTag("example");
 		EventPattern p4 = EventPattern.onReturn().from("lol").of("(.*)String(.*)")
 				.doBefore("com.mpraski.dummy.DummyMonitor3").setTag("example");
@@ -30,8 +30,9 @@ public class TestDefinitions implements EventPatternDefinitions {
 		EventPattern p14 = EventPattern.onMethodCall().of("(.*)someMethod").doAfter("com.mpraski.dummy.DummyMonitor4");
 		EventPattern p15 = EventPattern.onMethodCall().of("(.*)nothingToSay")
 				.doBefore("com.mpraski.dummy.DummyMonitor4");
+		EventPattern p16 = EventPattern.onReturn().from("(.*)writeInt").doInstead("com.mpraski.dummy.DummyMonitor5");
 
-		return Arrays.asList(p6, p8, p10, p12, p13, p14, p15);
+		return Arrays.asList(p3, p6, p8, p10, p12, p13, p14, p15, p16);
 	}
 
 }

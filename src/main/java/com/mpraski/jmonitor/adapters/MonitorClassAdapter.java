@@ -21,6 +21,7 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 	private final List<EventData> eventsBefore, eventsAfter, eventsInstead;
 
 	private String owner;
+	private String source;
 
 	public MonitorClassAdapter(ClassVisitor classVisitor, List<EventPatternMatcher> matchers,
 			Map<EventType, List<EventPatternMatcher>> mapped) {
@@ -41,13 +42,19 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 	}
 
 	@Override
+	public void visitSource(java.lang.String source, java.lang.String debug) {
+		this.source = source;
+		cv.visitSource(source, debug);
+	}
+
+	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 		MethodVisitor mv = cv.visitMethod(access, name, desc, signature, exceptions);
 
 		if (mv != null) {
 			LocalVariablesSorter lvs = new LocalVariablesSorter(access, desc, mv);
-			mv = new MonitorMethodAdapter(owner, access, name, desc, lvs, matchers, mapped, matchesFrom, eventsBefore,
-					eventsAfter, eventsInstead);
+			mv = new MonitorMethodAdapter(owner, access, name, desc, source, lvs, matchers, mapped, matchesFrom,
+					eventsBefore, eventsAfter, eventsInstead);
 		}
 
 		return mv;
