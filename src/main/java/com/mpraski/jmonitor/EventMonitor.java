@@ -33,7 +33,7 @@ public final class EventMonitor implements Cloneable {
 
 	@Override
 	public String toString() {
-		return "Monitor: '" + Objects.toString(monitor, "null") + "', order: '" + Objects.toString(order, "null") + "'";
+		return "Monitor: " + Objects.toString(monitor, "null") + ", Order: " + Objects.toString(order, "null");
 	}
 
 	@Override

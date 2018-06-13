@@ -1,7 +1,5 @@
 package com.mpraski.jmonitor;
 
-import java.util.Objects;
-
 public final class Event {
 	public Event(String tag, EventType type, EventOrder order, String source, int lineNumber, Object target,
 			Object[] arguments, StackTraceElement[] callstack) {
@@ -89,17 +87,17 @@ public final class Event {
 		final StringBuilder sb = new StringBuilder();
 
 		sb.append("Tag: ");
-		sb.append(Objects.toString(tag, "null"));
+		sb.append(tag);
 		sb.append(", Type: ");
-		sb.append(this.type);
+		sb.append(type);
 		sb.append(", Order: ");
-		sb.append(this.order);
+		sb.append(order);
 		sb.append(", Source: ");
-		sb.append(Objects.toString(source, "null"));
+		sb.append(source);
 		sb.append(", Line: ");
 		sb.append(lineNumber);
 		sb.append(", Target: ");
-		sb.append(Objects.toString(target, "null"));
+		sb.append(target);
 		sb.append(", Arguments: [ ");
 
 		if (arguments != null)

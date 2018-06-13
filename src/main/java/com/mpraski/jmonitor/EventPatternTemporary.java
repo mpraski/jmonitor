@@ -124,15 +124,22 @@ public final class EventPatternTemporary implements Cloneable {
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
 
-		builder.append("Type: '" + this.type + "',\ninPattern: '" + Objects.toString(inPattern, "null")
-				+ "',\nfromPattern: '" + Objects.toString(fromPattern, "null") + "',\nofPattern: '"
-				+ Objects.toString(ofPattern, "null") + "'");
+		builder.append("Type: ");
+		builder.append(type);
+		builder.append(", inPattern: ");
+		builder.append(Objects.toString(inPattern, "null"));
+		builder.append(", fromPattern: ");
+		builder.append(Objects.toString(fromPattern, "null"));
+		builder.append(", ofPattern: ");
+		builder.append(Objects.toString(ofPattern, "null"));
 
-		builder.append("\n-------------------------\n");
+		builder.append(System.lineSeparator());
+		builder.append("-------------------------");
+		builder.append(System.lineSeparator());
 
 		monitors.forEach(m -> {
 			builder.append(m);
-			builder.append("\n");
+			builder.append(System.lineSeparator());
 		});
 
 		return builder.toString();

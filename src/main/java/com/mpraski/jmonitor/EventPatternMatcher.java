@@ -147,13 +147,16 @@ public final class EventPatternMatcher {
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
 
-		builder.append("Type: '" + this.type + "'");
+		builder.append("Type: ");
+		builder.append(type);
 
-		builder.append("\n-------------------------\n");
+		builder.append(System.lineSeparator());
+		builder.append("-------------------------");
+		builder.append(System.lineSeparator());
 
 		monitors.forEach(m -> {
 			builder.append(m);
-			builder.append("\n");
+			builder.append(System.lineSeparator());
 		});
 
 		return builder.toString();

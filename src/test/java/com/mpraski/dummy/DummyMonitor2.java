@@ -7,7 +7,7 @@ public class DummyMonitor2 implements Monitor {
 
 	@Override
 	public void onEvent(Event event) {
-		System.out.println("Received event2: " + event);
+		System.out.println("DummyMonitor2 :: " + event);
 	}
 
 }

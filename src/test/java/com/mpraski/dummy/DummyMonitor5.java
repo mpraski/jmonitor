@@ -7,7 +7,7 @@ public class DummyMonitor5 implements InsteadMonitor {
 
 	@Override
 	public Object doInstead(Event event) {
-		System.out.println("Catching event5: " + event);
+		System.out.println("DummyMonitor5 :: " + event);
 
 		return new Integer(10045);
 	}

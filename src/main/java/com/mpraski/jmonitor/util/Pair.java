@@ -48,6 +48,6 @@ public final class Pair<K extends Comparable<? super K>, V extends Comparable<? 
 
 	@Override
 	public String toString() {
-		return "{" + Objects.toString(key, "null") + "=" + Objects.toString(value, "null") + "}";
+		return '{' + Objects.toString(key, "null") + '=' + Objects.toString(value, "null") + '}';
 	}
 }

@@ -1,7 +1,5 @@
 package com.mpraski.jmonitor.adapters;
 
-import java.util.Objects;
-
 import com.mpraski.jmonitor.EventOrder;
 import com.mpraski.jmonitor.EventType;
 
@@ -76,9 +74,22 @@ public final class EventData {
 
 	@Override
 	public String toString() {
-		return "Type: '" + this.type + "', Tag: '" + Objects.toString(tag, "null") + "', Signature: '" + "', Monitor: '"
-				+ Objects.toString(monitor, "null") + "', Name: '" + Objects.toString(name, "null") + "', Desc: '"
-				+ Objects.toString(desc, "null") + "', Owner: '" + Objects.toString(owner, "null") + "'";
+		final StringBuilder builder = new StringBuilder();
+
+		builder.append("Type: ");
+		builder.append(type);
+		builder.append(", Tag: ");
+		builder.append(tag);
+		builder.append(", Monitor: ");
+		builder.append(monitor);
+		builder.append(", Name: ");
+		builder.append(name);
+		builder.append(", Desc: ");
+		builder.append(desc);
+		builder.append(", Owner: ");
+		builder.append(owner);
+
+		return builder.toString();
 	}
 
 	public EventOrder getOrder() {
