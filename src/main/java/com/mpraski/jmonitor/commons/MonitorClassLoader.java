@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 
 import com.mpraski.jmonitor.EventPatternCompiler;
@@ -18,6 +17,7 @@ import com.mpraski.jmonitor.EventPatternMatcher;
 import com.mpraski.jmonitor.EventType;
 import com.mpraski.jmonitor.ResolverGenerator;
 import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
+import com.mpraski.jmonitor.instead.InsteadActionGenerator;
 
 public final class MonitorClassLoader extends ClassLoader {
 	static {
@@ -119,10 +119,13 @@ public final class MonitorClassLoader extends ClassLoader {
 
 				ClassReader cr = new ClassReader(classBytes);
 				ClassWriter cw = new ClassWriter(cr, 0);
-				ClassVisitor cv = new MonitorClassAdapter(cw, matchers, mapped);
-				cr.accept(cv, ClassReader.EXPAND_FRAMES);
+				MonitorClassAdapter adapter = new MonitorClassAdapter(cw, matchers, mapped);
+				cr.accept(adapter, ClassReader.EXPAND_FRAMES);
 
 				clazz = defineClass(name, cw.toByteArray());
+
+				for (InsteadActionGenerator g : adapter.getActionGenerators())
+					defineClass(g.getName(), g.generate());
 			} catch (IOException e) {
 				System.err.println("Error: Unable to load definitions class " + name);
 				e.printStackTrace();

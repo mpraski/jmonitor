@@ -1,7 +1,6 @@
 package com.mpraski.jmonitor.instead;
 
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
+import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
 
 public class FieldReadGenerator extends InsteadActionGenerator {
 
@@ -22,7 +21,7 @@ public class FieldReadGenerator extends InsteadActionGenerator {
 	}
 
 	@Override
-	public void modifyOuterClass(ClassVisitor cv) {
+	public void modifyOuterClass(MonitorClassAdapter adapter) {
 		// TODO Auto-generated method stub
 	}
 

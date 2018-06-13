@@ -1,7 +1,8 @@
 package com.mpraski.jmonitor.instead;
 
-import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
+
+import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
 
 /*
  * Used to generate inner classes - instances of InsteadAction which execute 
@@ -20,6 +21,10 @@ public abstract class InsteadActionGenerator implements Opcodes {
 		this.outerClass = outerClass;
 	}
 
+	public String getName() {
+		return innerClass;
+	}
+
 	/*
 	 * Generate the inner class representing the InsteadAction instance.
 	 */
@@ -34,5 +39,5 @@ public abstract class InsteadActionGenerator implements Opcodes {
 	/*
 	 * While the class is still being instrumented, add appropriate code.
 	 */
-	public abstract void modifyOuterClass(ClassVisitor cv);
+	public abstract void modifyOuterClass(MonitorClassAdapter adapter);
 }
