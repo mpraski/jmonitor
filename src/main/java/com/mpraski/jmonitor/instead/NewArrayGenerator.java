@@ -4,8 +4,8 @@ import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
 
 public final class NewArrayGenerator extends InsteadActionGenerator {
 
-	public NewArrayGenerator(String innerClass, String outerClass) {
-		super(innerClass, outerClass);
+	public NewArrayGenerator(String innerClass, String outerClass, String methodName, String methodDesc) {
+		super(innerClass, outerClass, methodName, methodDesc);
 		// TODO Auto-generated constructor stub
 	}
 

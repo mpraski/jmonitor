@@ -16,13 +16,16 @@ import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
  * 4. New instance/array - constructor called with args, or args[0] - array size, rest - contents. Returns created instance.
  */
 public abstract class InsteadActionGenerator implements Opcodes {
-	protected final String innerClass, outerClass, name, simpleName;
+	protected final String innerClass, outerClass, methodName, methodDesc, name, simpleName;
+	protected final static String[] insteadInterface = new String[] { "com/mpraski/jmonitor/InsteadAction" };
 
-	public InsteadActionGenerator(String innerClass, String outerClass) {
+	public InsteadActionGenerator(String innerClass, String outerClass, String methodName, String methodDesc) {
 		this.innerClass = innerClass;
 		this.outerClass = outerClass;
+		this.methodName = methodName;
+		this.methodDesc = methodDesc;
 		this.name = outerClass + '$' + innerClass;
-		String[] parts = name.split(Pattern.quote("."));
+		String[] parts = name.split(Pattern.quote("/"));
 		this.simpleName = parts[parts.length - 1];
 	}
 
@@ -36,6 +39,14 @@ public abstract class InsteadActionGenerator implements Opcodes {
 
 	public String getOuterName() {
 		return outerClass;
+	}
+
+	public String getMethodName() {
+		return methodName;
+	}
+
+	public String getMethodDesc() {
+		return methodDesc;
 	}
 
 	/*

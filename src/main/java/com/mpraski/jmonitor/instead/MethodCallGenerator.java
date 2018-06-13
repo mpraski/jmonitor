@@ -4,8 +4,8 @@ import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
 
 public final class MethodCallGenerator extends InsteadActionGenerator {
 
-	public MethodCallGenerator(String innerClass, String outerClass) {
-		super(innerClass, outerClass);
+	public MethodCallGenerator(String innerClass, String outerClass, String methodName, String methodDesc) {
+		super(innerClass, outerClass, methodName, methodDesc);
 		// TODO Auto-generated constructor stub
 	}
 
@@ -17,14 +17,12 @@ public final class MethodCallGenerator extends InsteadActionGenerator {
 
 	@Override
 	public boolean modifiesOuterClass() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public void modifyOuterClass(MonitorClassAdapter adapter) {
-		// TODO Auto-generated method stub
-
+		throw new UnsupportedOperationException();
 	}
 
 }
