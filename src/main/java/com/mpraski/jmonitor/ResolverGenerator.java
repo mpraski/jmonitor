@@ -11,9 +11,9 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-public class ResolverWriter implements Opcodes {
+public class ResolverGenerator implements Opcodes {
 
-	public static byte[] write(Set<EventMonitor> monitors) {
+	public static byte[] generate(Set<EventMonitor> monitors) {
 		Set<String> processed = new HashSet<>(monitors.size());
 
 		ClassWriter classWriter = new ClassWriter(0);
@@ -25,15 +25,13 @@ public class ResolverWriter implements Opcodes {
 
 		classWriter.visitSource("Resolver.java", null);
 
-		{
-			methodVisitor = classWriter.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
-			methodVisitor.visitCode();
-			methodVisitor.visitVarInsn(ALOAD, 0);
-			methodVisitor.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-			methodVisitor.visitInsn(RETURN);
-			methodVisitor.visitMaxs(1, 1);
-			methodVisitor.visitEnd();
-		}
+		methodVisitor = classWriter.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+		methodVisitor.visitCode();
+		methodVisitor.visitVarInsn(ALOAD, 0);
+		methodVisitor.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+		methodVisitor.visitInsn(RETURN);
+		methodVisitor.visitMaxs(1, 1);
+		methodVisitor.visitEnd();
 
 		String mClass;
 		String fieldName;

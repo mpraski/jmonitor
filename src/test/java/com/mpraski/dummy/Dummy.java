@@ -2,6 +2,8 @@ package com.mpraski.dummy;
 
 import java.math.BigInteger;
 
+import com.mpraski.jmonitor.InsteadAction;
+
 public class Dummy {
 	private String lel = "oh my my";
 	private int lilp = 1;
@@ -75,6 +77,15 @@ public class Dummy {
 		synchronized (this) {
 			mumbo = 234;
 		}
+
+		InsteadAction ia = new InsteadAction() {
+
+			@Override
+			public Object doAction(Object[] arguments) {
+				return writeObject();
+			}
+
+		};
 
 		return mumbo;
 	}

@@ -16,7 +16,7 @@ import com.mpraski.jmonitor.EventPatternCompiler;
 import com.mpraski.jmonitor.EventPatternDefinitions;
 import com.mpraski.jmonitor.EventPatternMatcher;
 import com.mpraski.jmonitor.EventType;
-import com.mpraski.jmonitor.ResolverWriter;
+import com.mpraski.jmonitor.ResolverGenerator;
 import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
 
 public final class MonitorClassLoader extends ClassLoader {
@@ -27,7 +27,6 @@ public final class MonitorClassLoader extends ClassLoader {
 	private final Map<String, Class<?>> transformedClasses = new ConcurrentHashMap<>();
 	private final Map<String, Object> classLocks = new ConcurrentHashMap<>();
 
-	private final EventPatternCompiler compiler;
 	private final List<EventPatternMatcher> matchers;
 	private final Map<EventType, List<EventPatternMatcher>> mapped;
 
@@ -46,7 +45,7 @@ public final class MonitorClassLoader extends ClassLoader {
 		if (defInstance == null)
 			throw new NullPointerException("Instance of EventPatternDefinitions is null");
 
-		this.compiler = new EventPatternCompiler();
+		EventPatternCompiler compiler = new EventPatternCompiler();
 		compiler.compile(defInstance.getEventPatterns());
 
 		this.matchers = compiler.getMatchers();
@@ -57,7 +56,7 @@ public final class MonitorClassLoader extends ClassLoader {
 		for (EventPatternMatcher m : matchers)
 			mapped.get(m.getType()).add(m);
 
-		byte[] resolverBytes = ResolverWriter.write(compiler.getMonitors());
+		byte[] resolverBytes = ResolverGenerator.generate(compiler.getMonitors());
 		if (resolverBytes == null)
 			throw new NullPointerException("Could not generate Resolver class");
 

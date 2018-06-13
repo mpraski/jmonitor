@@ -12,6 +12,7 @@ import org.objectweb.asm.commons.LocalVariablesSorter;
 
 import com.mpraski.jmonitor.EventPatternMatcher;
 import com.mpraski.jmonitor.EventType;
+import com.mpraski.jmonitor.instead.InsteadActionGenerator;
 
 public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 
@@ -19,6 +20,7 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 	private final Map<EventType, List<EventPatternMatcher>> mapped;
 	private final Map<EventPatternMatcher, Boolean> matchesFrom;
 	private final List<EventData> eventsBefore, eventsAfter, eventsInstead;
+	private final List<InsteadActionGenerator> actionGenerators;
 
 	private String owner;
 	private String source;
@@ -33,6 +35,7 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 		this.eventsBefore = new ArrayList<>();
 		this.eventsAfter = new ArrayList<>();
 		this.eventsInstead = new ArrayList<>();
+		this.actionGenerators = new ArrayList<>();
 	}
 
 	@Override
@@ -58,6 +61,14 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 		}
 
 		return mv;
+	}
+
+	@Override
+	public void visitEnd() {
+		actionGenerators.stream().filter(InsteadActionGenerator::modifiesOuterClass)
+				.forEach(g -> g.modifyOuterClass(cv));
+
+		cv.visitEnd();
 	}
 
 }
