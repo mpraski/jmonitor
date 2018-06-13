@@ -1,19 +1,14 @@
 package com.mpraski.jmonitor.adapters;
 
-import static com.mpraski.jmonitor.util.Constants.DOUBLE_INSNS;
-import static com.mpraski.jmonitor.util.Constants.DOUBLE_TYPE;
-import static com.mpraski.jmonitor.util.Constants.FLOAT_INSNS;
-import static com.mpraski.jmonitor.util.Constants.FLOAT_TYPE;
-import static com.mpraski.jmonitor.util.Constants.INTEGER_INSNS;
-import static com.mpraski.jmonitor.util.Constants.INTEGER_TYPE;
-import static com.mpraski.jmonitor.util.Constants.LONG_INSNS;
-import static com.mpraski.jmonitor.util.Constants.LONG_TYPE;
-import static com.mpraski.jmonitor.util.Constants.OBJECT_ARRAY_TYPE;
-import static com.mpraski.jmonitor.util.Constants.REF_INSNS;
-import static com.mpraski.jmonitor.util.Constants.TYPE_DOUBLE;
-import static com.mpraski.jmonitor.util.Constants.TYPE_FLOAT;
-import static com.mpraski.jmonitor.util.Constants.TYPE_INTEGER;
-import static com.mpraski.jmonitor.util.Constants.TYPE_LONG;
+import static com.mpraski.jmonitor.util.Constants.CLASS_DOUBLE;
+import static com.mpraski.jmonitor.util.Constants.CLASS_FLOAT;
+import static com.mpraski.jmonitor.util.Constants.CLASS_INTEGER;
+import static com.mpraski.jmonitor.util.Constants.CLASS_LONG;
+import static com.mpraski.jmonitor.util.Constants.INSNS_DOUBLE;
+import static com.mpraski.jmonitor.util.Constants.INSNS_FLOAT;
+import static com.mpraski.jmonitor.util.Constants.INSNS_INT;
+import static com.mpraski.jmonitor.util.Constants.INSNS_LONG;
+import static com.mpraski.jmonitor.util.Constants.INSNS_REF;
 import static com.mpraski.jmonitor.util.Constants.eventOrder;
 import static com.mpraski.jmonitor.util.Constants.eventType;
 import static com.mpraski.jmonitor.util.Constants.getPrimitiveClass;
@@ -25,6 +20,11 @@ import static com.mpraski.jmonitor.util.Constants.monitorClass;
 import static com.mpraski.jmonitor.util.Constants.monitorClassFunc;
 import static com.mpraski.jmonitor.util.Constants.monitorClassFuncType;
 import static com.mpraski.jmonitor.util.Constants.monitorClassType;
+import static com.mpraski.jmonitor.util.Constants.typeOfArray;
+import static com.mpraski.jmonitor.util.Constants.typeOfDouble;
+import static com.mpraski.jmonitor.util.Constants.typeOfFloat;
+import static com.mpraski.jmonitor.util.Constants.typeOfInteger;
+import static com.mpraski.jmonitor.util.Constants.typeOfLong;
 
 import java.util.List;
 import java.util.Map;
@@ -47,12 +47,18 @@ import com.mpraski.jmonitor.util.Pair;
 public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	/*
+	 * Instance of enclosing MonitorClassAdapter, used to get indices of next inner
+	 * class / accessor method.
+	 */
+	private final MonitorClassAdapter adapter;
+
+	/*
 	 * Used to add local variables in cases where certain values (e.g. method
 	 * arguments, event arguments array) need to be preserved.
 	 */
 	private final LocalVariablesSorter sorter;
 
-	private final String thisName, thisDesc, thisRet, thisSource;
+	private final String thisName, thisDesc, thisOwner, thisRet, thisSource;
 	private final Map<EventType, List<EventPatternMatcher>> mapped;
 	private final Map<EventPatternMatcher, Boolean> matchesFrom;
 
@@ -72,16 +78,18 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	private EventType currentType;
 
 	protected MonitorMethodAdapter(String owner, int access, String name, String desc, String source,
-			LocalVariablesSorter lvs, List<EventPatternMatcher> matchers,
+			MonitorClassAdapter adapter, LocalVariablesSorter sorter, List<EventPatternMatcher> matchers,
 			Map<EventType, List<EventPatternMatcher>> mapped, Map<EventPatternMatcher, Boolean> matchesFrom,
 			List<EventData> eventsBefore, List<EventData> eventsAfter, List<EventData> eventsInstead) {
-		super(ASM5, owner, access, name, desc, lvs);
+		super(ASM5, owner, access, name, desc, sorter);
 
-		this.thisName = toDots(owner) + '.' + name;
+		this.thisOwner = toDots(owner);
+		this.thisName = thisOwner + '.' + name;
 		this.thisDesc = desc;
 		this.thisRet = toDots(Type.getMethodType(desc).getReturnType().getInternalName());
 		this.thisSource = source;
-		this.sorter = lvs;
+		this.adapter = adapter;
+		this.sorter = sorter;
 		this.mapped = mapped;
 		this.matchesFrom = matchesFrom;
 
@@ -617,7 +625,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		pushInt(numArgs);
 		super.visitTypeInsn(ANEWARRAY, "java/lang/Object");
 
-		int methodArgs = sorter.newLocal(OBJECT_ARRAY_TYPE);
+		int methodArgs = sorter.newLocal(typeOfArray);
 		super.visitVarInsn(ASTORE, methodArgs);
 
 		Type topType;
@@ -648,7 +656,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 				super.visitInsn(SWAP);
 			}
 
-			if (!insns.equals(REF_INSNS))
+			if (!insns.equals(INSNS_REF))
 				boxWithoutDup(topType);
 
 			pushInt(i);
@@ -835,15 +843,13 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	 * Attempts to produce a boxed value from descriptor of type of the value on top
 	 * of the stack.
 	 */
-	private String box(String desc) {
+	private void box(String desc) {
 		if (desc.length() > 1)
-			return desc;
+			return;
 
 		Pair<String, String> type = getPrimitiveClass(desc);
 
 		super.visitMethodInsn(INVOKESTATIC, type.getKey(), "valueOf", type.getValue(), false);
-
-		return type.getKey();
 	}
 
 	/*
@@ -852,20 +858,20 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	private Type box(Type type) {
 		if (type.equals(Type.LONG_TYPE)) {
 			super.visitInsn(DUP2);
-			super.visitMethodInsn(INVOKESTATIC, TYPE_LONG.getKey(), "valueOf", TYPE_LONG.getValue(), false);
-			return LONG_TYPE;
+			super.visitMethodInsn(INVOKESTATIC, CLASS_LONG.getKey(), "valueOf", CLASS_LONG.getValue(), false);
+			return typeOfLong;
 		} else if (type.equals(Type.DOUBLE_TYPE)) {
 			super.visitInsn(DUP2);
-			super.visitMethodInsn(INVOKESTATIC, TYPE_DOUBLE.getKey(), "valueOf", TYPE_DOUBLE.getValue(), false);
-			return DOUBLE_TYPE;
+			super.visitMethodInsn(INVOKESTATIC, CLASS_DOUBLE.getKey(), "valueOf", CLASS_DOUBLE.getValue(), false);
+			return typeOfDouble;
 		} else if (type.equals(Type.INT_TYPE)) {
 			super.visitInsn(DUP);
-			super.visitMethodInsn(INVOKESTATIC, TYPE_INTEGER.getKey(), "valueOf", TYPE_INTEGER.getValue(), false);
-			return INTEGER_TYPE;
+			super.visitMethodInsn(INVOKESTATIC, CLASS_INTEGER.getKey(), "valueOf", CLASS_INTEGER.getValue(), false);
+			return typeOfInteger;
 		} else if (type.equals(Type.FLOAT_TYPE)) {
 			super.visitInsn(DUP);
-			super.visitMethodInsn(INVOKESTATIC, TYPE_FLOAT.getKey(), "valueOf", TYPE_FLOAT.getValue(), false);
-			return FLOAT_TYPE;
+			super.visitMethodInsn(INVOKESTATIC, CLASS_FLOAT.getKey(), "valueOf", CLASS_FLOAT.getValue(), false);
+			return typeOfFloat;
 		}
 
 		return type;
@@ -877,17 +883,17 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	 */
 	private Type boxWithoutDup(Type type) {
 		if (type.equals(Type.LONG_TYPE)) {
-			super.visitMethodInsn(INVOKESTATIC, TYPE_LONG.getKey(), "valueOf", TYPE_LONG.getValue(), false);
-			return LONG_TYPE;
+			super.visitMethodInsn(INVOKESTATIC, CLASS_LONG.getKey(), "valueOf", CLASS_LONG.getValue(), false);
+			return typeOfLong;
 		} else if (type.equals(Type.DOUBLE_TYPE)) {
-			super.visitMethodInsn(INVOKESTATIC, TYPE_DOUBLE.getKey(), "valueOf", TYPE_DOUBLE.getValue(), false);
-			return DOUBLE_TYPE;
+			super.visitMethodInsn(INVOKESTATIC, CLASS_DOUBLE.getKey(), "valueOf", CLASS_DOUBLE.getValue(), false);
+			return typeOfDouble;
 		} else if (type.equals(Type.INT_TYPE)) {
-			super.visitMethodInsn(INVOKESTATIC, TYPE_INTEGER.getKey(), "valueOf", TYPE_INTEGER.getValue(), false);
-			return INTEGER_TYPE;
+			super.visitMethodInsn(INVOKESTATIC, CLASS_INTEGER.getKey(), "valueOf", CLASS_INTEGER.getValue(), false);
+			return typeOfInteger;
 		} else if (type.equals(Type.FLOAT_TYPE)) {
-			super.visitMethodInsn(INVOKESTATIC, TYPE_FLOAT.getKey(), "valueOf", TYPE_FLOAT.getValue(), false);
-			return FLOAT_TYPE;
+			super.visitMethodInsn(INVOKESTATIC, CLASS_FLOAT.getKey(), "valueOf", CLASS_FLOAT.getValue(), false);
+			return typeOfFloat;
 		}
 
 		return type;
@@ -895,18 +901,26 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	private void unbox(Type type) {
 		if (type.equals(Type.LONG_TYPE)) {
-			super.visitTypeInsn(CHECKCAST, TYPE_LONG.getKey());
-			super.visitMethodInsn(INVOKEVIRTUAL, TYPE_LONG.getKey(), "longValue", "()J", false);
+			super.visitTypeInsn(CHECKCAST, CLASS_LONG.getKey());
+			super.visitMethodInsn(INVOKEVIRTUAL, CLASS_LONG.getKey(), "longValue", "()J", false);
 		} else if (type.equals(Type.DOUBLE_TYPE)) {
-			super.visitTypeInsn(CHECKCAST, TYPE_DOUBLE.getKey());
-			super.visitMethodInsn(INVOKEVIRTUAL, TYPE_DOUBLE.getKey(), "doubleValue", "()D", false);
+			super.visitTypeInsn(CHECKCAST, CLASS_DOUBLE.getKey());
+			super.visitMethodInsn(INVOKEVIRTUAL, CLASS_DOUBLE.getKey(), "doubleValue", "()D", false);
 		} else if (type.equals(Type.INT_TYPE)) {
-			super.visitTypeInsn(CHECKCAST, TYPE_INTEGER.getKey());
-			super.visitMethodInsn(INVOKEVIRTUAL, TYPE_INTEGER.getKey(), "intValue", "()I", false);
+			super.visitTypeInsn(CHECKCAST, CLASS_INTEGER.getKey());
+			super.visitMethodInsn(INVOKEVIRTUAL, CLASS_INTEGER.getKey(), "intValue", "()I", false);
 		} else if (type.equals(Type.FLOAT_TYPE)) {
-			super.visitTypeInsn(CHECKCAST, TYPE_FLOAT.getKey());
-			super.visitMethodInsn(INVOKEVIRTUAL, TYPE_FLOAT.getKey(), "floatValue", "()F", false);
+			super.visitTypeInsn(CHECKCAST, CLASS_FLOAT.getKey());
+			super.visitMethodInsn(INVOKEVIRTUAL, CLASS_FLOAT.getKey(), "floatValue", "()F", false);
 		}
+	}
+
+	private String nextInnerClass() {
+		return thisOwner + '$' + adapter.getNextInnerClass();
+	}
+
+	private String nextAccessor() {
+		return thisOwner + ".access$" + adapter.getNextAccessor();
 	}
 
 	private static boolean isReference(Type type) {
@@ -915,15 +929,15 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	private static Pair<Integer, Integer> getPrimitiveInsns(Type t) {
 		if (t.equals(Type.INT_TYPE))
-			return INTEGER_INSNS;
+			return INSNS_INT;
 		else if (t.equals(Type.FLOAT_TYPE))
-			return FLOAT_INSNS;
+			return INSNS_FLOAT;
 		else if (t.equals(Type.LONG_TYPE))
-			return LONG_INSNS;
+			return INSNS_LONG;
 		else if (t.equals(Type.DOUBLE_TYPE))
-			return DOUBLE_INSNS;
+			return INSNS_DOUBLE;
 
-		return REF_INSNS;
+		return INSNS_REF;
 	}
 
 	private static String toDots(String s) {

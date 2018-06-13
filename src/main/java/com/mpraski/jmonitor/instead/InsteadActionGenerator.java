@@ -1,5 +1,7 @@
 package com.mpraski.jmonitor.instead;
 
+import java.util.regex.Pattern;
+
 import org.objectweb.asm.Opcodes;
 
 import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
@@ -14,15 +16,26 @@ import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
  * 4. New instance/array - constructor called with args, or args[0] - array size, rest - contents. Returns created instance.
  */
 public abstract class InsteadActionGenerator implements Opcodes {
-	protected final String innerClass, outerClass;
+	protected final String innerClass, outerClass, name, simpleName;
 
 	public InsteadActionGenerator(String innerClass, String outerClass) {
 		this.innerClass = innerClass;
 		this.outerClass = outerClass;
+		this.name = outerClass + '$' + innerClass;
+		String[] parts = name.split(Pattern.quote("."));
+		this.simpleName = parts[parts.length - 1];
 	}
 
 	public String getName() {
-		return innerClass;
+		return name;
+	}
+
+	public String getSimpleName() {
+		return simpleName;
+	}
+
+	public String getOuterName() {
+		return outerClass;
 	}
 
 	/*

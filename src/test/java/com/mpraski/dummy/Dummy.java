@@ -82,7 +82,8 @@ public class Dummy {
 
 			@Override
 			public Object doAction(Object[] arguments) {
-				return writeObject();
+				wop = "bilo";
+				return null;
 			}
 
 		};

@@ -2,9 +2,9 @@ package com.mpraski.jmonitor.instead;
 
 import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
 
-public final class FieldReadGenerator extends InsteadActionGenerator {
+public final class MethodCallGenerator extends InsteadActionGenerator {
 
-	public FieldReadGenerator(String innerClass, String outerClass) {
+	public MethodCallGenerator(String innerClass, String outerClass) {
 		super(innerClass, outerClass);
 		// TODO Auto-generated constructor stub
 	}
@@ -17,12 +17,14 @@ public final class FieldReadGenerator extends InsteadActionGenerator {
 
 	@Override
 	public boolean modifiesOuterClass() {
-		return true;
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 	@Override
 	public void modifyOuterClass(MonitorClassAdapter adapter) {
 		// TODO Auto-generated method stub
+
 	}
 
 }

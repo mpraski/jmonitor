@@ -124,6 +124,9 @@ public final class MonitorClassLoader extends ClassLoader {
 
 				clazz = defineClass(name, cw.toByteArray());
 
+				/*
+				 * Define inner classes for instead event instrumentation
+				 */
 				for (InsteadActionGenerator g : adapter.getActionGenerators())
 					defineClass(g.getName(), g.generate());
 			} catch (IOException e) {
