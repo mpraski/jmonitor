@@ -40,6 +40,7 @@ import com.mpraski.jmonitor.EventOrder;
 import com.mpraski.jmonitor.EventPatternMatcher;
 import com.mpraski.jmonitor.EventType;
 import com.mpraski.jmonitor.instead.FieldReadGenerator;
+import com.mpraski.jmonitor.instead.InsteadActionGenerator;
 import com.mpraski.jmonitor.util.Pair;
 
 /*
@@ -72,6 +73,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	private boolean shouldGenerateLocal;
 	private boolean shouldGenerateDup;
 	private boolean shouldGenerateArgsArray;
+	private boolean shouldPreserveOriginal = true;
 	private int generatedLocal;
 	private int generatedArgsArray;
 	private int currentNumArgs;
@@ -168,7 +170,8 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 		instrumentBefore();
 		instrumentInstead();
-		super.visitFieldInsn(opcode, owner, name, desc);
+		if (shouldPreserveOriginal)
+			super.visitFieldInsn(opcode, owner, name, desc);
 		instrumentAfter();
 	}
 
@@ -298,6 +301,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		eventsAfter.clear();
 		eventsInstead.clear();
 		shouldGenerateLocal = shouldGenerateDup = shouldGenerateArgsArray = false;
+		shouldPreserveOriginal = true;
 	}
 
 	private void addMonitors(EventPatternMatcher e) {
@@ -619,9 +623,29 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	private void visitReadInstead(EventData e) {
+		Type oldType = Type.getType(e.getDesc());
 		Type type = Type.getObjectType(thisOwner);
-		adapter.addActionGenerator(new FieldReadGenerator(adapter.getNextInnerClass(), thisOwner, originalName,
-				thisDesc, "(" + type.getDescriptor() + ")" + e.getDesc(), e.getName(), e.getDesc()));
+
+		InsteadActionGenerator g = new FieldReadGenerator(adapter.getNextInnerClass(), thisOwner, originalName,
+				thisDesc, "(" + type.getDescriptor() + ")" + e.getDesc(), e.getName(), e.getDesc());
+
+		adapter.addActionGenerator(g);
+
+		super.visitTypeInsn(NEW, g.getName());
+		super.visitInsn(DUP);
+		super.visitIntInsn(ALOAD, 0);
+		super.visitMethodInsn(INVOKESPECIAL, g.getName(), "<init>", "(" + type.getDescriptor() + ")V", false);
+
+		visitEventStartWithSwap(e);
+		super.visitInsn(ACONST_NULL);
+		visitEventEndWithAction(e);
+
+		if (isReference(oldType))
+			super.visitTypeInsn(CHECKCAST, oldType.getInternalName());
+		else
+			unbox(oldType);
+
+		shouldPreserveOriginal = false;
 	}
 
 	/*
@@ -784,6 +808,17 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 					insteadMonitorClassFuncType, true);
 		else
 			super.visitMethodInsn(INVOKEINTERFACE, monitorClass, monitorClassFunc, monitorClassFuncType, true);
+	}
+
+	private void visitEventEndWithAction(EventData e) {
+		super.visitMethodInsn(INVOKESTATIC, "java/lang/Thread", "currentThread", "()Ljava/lang/Thread;", false);
+		super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Thread", "getStackTrace", "()[Ljava/lang/StackTraceElement;",
+				false);
+		super.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/Event", "<init>",
+				"(Ljava/lang/String;Lcom/mpraski/jmonitor/EventType;Lcom/mpraski/jmonitor/EventOrder;Ljava/lang/String;ILcom/mpraski/jmonitor/InsteadAction;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
+				false);
+		super.visitMethodInsn(INVOKEINTERFACE, insteadMonitorClass, insteadMonitorClassFunc,
+				insteadMonitorClassFuncType, true);
 	}
 
 	private void pushInt(int i) {

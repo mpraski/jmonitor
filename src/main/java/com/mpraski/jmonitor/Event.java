@@ -13,6 +13,19 @@ public final class Event {
 		this.callstack = callstack;
 	}
 
+	public Event(String tag, EventType type, EventOrder order, String source, int lineNumber, InsteadAction action,
+			Object[] arguments, StackTraceElement[] callstack) {
+		this.tag = tag;
+		this.type = type;
+		this.order = order;
+		this.source = source;
+		this.lineNumber = lineNumber;
+		this.target = null;
+		this.action = action;
+		this.arguments = arguments;
+		this.callstack = callstack;
+	}
+
 	// Optional tag of the event
 	private final String tag;
 	// Specified type of event
@@ -78,10 +91,6 @@ public final class Event {
 		return callstack;
 	}
 
-	public void setAction(InsteadAction action) {
-		this.action = action;
-	}
-
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
@@ -107,6 +116,11 @@ public final class Event {
 			}
 
 		sb.append(']');
+
+		if (action != null) {
+			sb.append(", Action: ");
+			sb.append(action);
+		}
 
 		return sb.toString();
 	}

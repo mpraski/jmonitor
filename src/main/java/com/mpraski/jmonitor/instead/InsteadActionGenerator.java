@@ -58,6 +58,28 @@ public abstract class InsteadActionGenerator implements Opcodes {
 		mv.visitMethodInsn(INVOKESTATIC, type.getKey(), "valueOf", type.getValue(), false);
 	}
 
+	protected static int getReturnInsn(String desc) {
+		if (desc.length() > 1)
+			return ARETURN;
+
+		switch (desc) {
+		case "I":
+		case "Z":
+		case "C":
+		case "B":
+		case "S":
+			return IRETURN;
+		case "F":
+			return FRETURN;
+		case "D":
+			return DRETURN;
+		case "J":
+			return LRETURN;
+		}
+
+		throw new IllegalStateException("Unidentified primitive: " + desc);
+	}
+
 	/*
 	 * Generate the inner class representing the InsteadAction instance.
 	 */

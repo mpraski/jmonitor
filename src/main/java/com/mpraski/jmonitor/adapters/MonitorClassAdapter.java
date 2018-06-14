@@ -60,6 +60,10 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 		actionGenerators.add(a);
 	}
 
+	protected void addInnerClass(InsteadActionGenerator a) {
+		cv.visitInnerClass(a.getName(), a.getOuterName(), a.getSimpleName(), 0);
+	}
+
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
 		this.owner = name;

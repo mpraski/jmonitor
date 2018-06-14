@@ -9,7 +9,7 @@ public class Dummy {
 	private int lilp = 1;
 	private int gosh = 2;
 	private double mumbo = 123.545d;
-	private long jumbo = 1243647345l;
+	private long jumbo = 1234;
 
 	private static String wop = "wop";
 
@@ -25,7 +25,7 @@ public class Dummy {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		d.writeJumbo();
+		System.out.println("writeJumbo " + d.writeJumbo());
 		d.readWop();
 		d.writeObject();
 		d.doCall();
