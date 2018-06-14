@@ -25,7 +25,7 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 	private String owner;
 	private String source;
 	private int accessorIndex;
-	private int innerClassIndex;
+	private int innerClassIndex = 1;
 
 	public MonitorClassAdapter(ClassVisitor classVisitor, List<EventPatternMatcher> matchers,
 			Map<EventType, List<EventPatternMatcher>> mapped) {
@@ -40,20 +40,24 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 		this.actionGenerators = new ArrayList<>();
 	}
 
-	protected int getNextAccessor() {
-		return accessorIndex++;
+	public String getNextInnerClass() {
+		return String.valueOf(innerClassIndex++);
 	}
 
-	protected int getNextInnerClass() {
-		return innerClassIndex++;
+	public String getNextAccessor() {
+		return "access$" + (accessorIndex++);
 	}
 
-	protected ClassVisitor getClassVisitor() {
+	public ClassVisitor getClassVisitor() {
 		return cv;
 	}
 
 	public List<InsteadActionGenerator> getActionGenerators() {
 		return actionGenerators;
+	}
+
+	public void addActionGenerator(InsteadActionGenerator a) {
+		actionGenerators.add(a);
 	}
 
 	@Override
@@ -84,7 +88,7 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 	@Override
 	public void visitEnd() {
 		for (InsteadActionGenerator g : actionGenerators) {
-			cv.visitInnerClass(g.getName(), g.getOuterName(), g.getSimpleName(), ACC_STATIC | ACC_SYNTHETIC);
+			cv.visitInnerClass(g.getName(), g.getOuterName(), g.getSimpleName(), 0);
 
 			if (g.modifiesOuterClass())
 				g.modifyOuterClass(this);

@@ -125,15 +125,12 @@ public final class MonitorClassLoader extends ClassLoader {
 				clazz = defineClass(name, cw.toByteArray());
 
 				/*
-				 * Define inner classes for instead event instrumentation
+				 * Define inner classes for instead event instrumentation eagerly.
 				 */
 				for (InsteadActionGenerator g : adapter.getActionGenerators())
-					defineClass(g.getName(), g.generate());
-			} catch (IOException e) {
-				System.err.println("Error: Unable to load definitions class " + name);
-				e.printStackTrace();
-			} catch (ClassFormatError e) {
-				System.err.println("Error: Invalid definitions class " + name);
+					transformedClasses.put(g.getInternalName(), defineClass(g.getInternalName(), g.generate()));
+
+			} catch (IOException | ClassFormatError e) {
 				e.printStackTrace();
 			}
 

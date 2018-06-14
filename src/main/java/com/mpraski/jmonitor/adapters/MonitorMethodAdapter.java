@@ -39,6 +39,7 @@ import com.mpraski.jmonitor.EventMonitor;
 import com.mpraski.jmonitor.EventOrder;
 import com.mpraski.jmonitor.EventPatternMatcher;
 import com.mpraski.jmonitor.EventType;
+import com.mpraski.jmonitor.instead.FieldReadGenerator;
 import com.mpraski.jmonitor.util.Pair;
 
 /*
@@ -58,7 +59,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	 */
 	private final LocalVariablesSorter sorter;
 
-	private final String thisName, thisDesc, thisOwner, thisRet, thisSource;
+	private final String thisName, thisDesc, thisOwner, thisRet, thisSource, originalName;
 	private final Map<EventType, List<EventPatternMatcher>> mapped;
 	private final Map<EventPatternMatcher, Boolean> matchesFrom;
 
@@ -83,8 +84,9 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 			List<EventData> eventsBefore, List<EventData> eventsAfter, List<EventData> eventsInstead) {
 		super(ASM5, owner, access, name, desc, sorter);
 
-		this.thisOwner = toDots(owner);
-		this.thisName = thisOwner + '.' + name;
+		this.thisOwner = owner;
+		this.originalName = name;
+		this.thisName = toDots(owner) + '.' + name;
 		this.thisDesc = desc;
 		this.thisRet = toDots(Type.getMethodType(desc).getReturnType().getInternalName());
 		this.thisSource = source;
@@ -457,6 +459,9 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		case MONITOR_EXIT:
 			eventsInstead.forEach(this::visitTopWithSwap);
 			break;
+		case FIELD_READ:
+			eventsInstead.forEach(this::visitReadInstead);
+			break;
 		}
 	}
 
@@ -611,6 +616,12 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		super.visitLdcInsn(e.getName());
 		super.visitVarInsn(ALOAD, generatedArgsArray);
 		visitEventEnd(e);
+	}
+
+	private void visitReadInstead(EventData e) {
+		Type type = Type.getObjectType(thisOwner);
+		adapter.addActionGenerator(new FieldReadGenerator(adapter.getNextInnerClass(), thisOwner, originalName,
+				thisDesc, "(" + type.getDescriptor() + ")" + e.getDesc(), e.getName(), e.getDesc()));
 	}
 
 	/*
@@ -913,14 +924,6 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 			super.visitTypeInsn(CHECKCAST, CLASS_FLOAT.getKey());
 			super.visitMethodInsn(INVOKEVIRTUAL, CLASS_FLOAT.getKey(), "floatValue", "()F", false);
 		}
-	}
-
-	private String nextInnerClass() {
-		return thisOwner + '$' + adapter.getNextInnerClass();
-	}
-
-	private String nextAccessor() {
-		return thisOwner + ".access$" + adapter.getNextAccessor();
 	}
 
 	private static boolean isReference(Type type) {
