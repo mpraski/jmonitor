@@ -10,15 +10,15 @@ import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
 
 public final class FieldReadGenerator extends InsteadActionGenerator {
 
+	private final String accessorName;
 	private final String accessorDesc;
 	private final String fieldName;
 	private final String fieldDesc;
 
-	private String nextAccessor;
-
 	public FieldReadGenerator(String innerClass, String outerClass, String methodName, String methodDesc,
-			String accessorDesc, String fieldName, String fieldDesc) {
+			String accessorName, String accessorDesc, String fieldName, String fieldDesc) {
 		super(innerClass, outerClass, methodName, methodDesc);
+		this.accessorName = accessorName;
 		this.accessorDesc = accessorDesc;
 		this.fieldName = fieldName;
 		this.fieldDesc = fieldDesc;
@@ -26,9 +26,6 @@ public final class FieldReadGenerator extends InsteadActionGenerator {
 
 	@Override
 	public byte[] generate() {
-		if (nextAccessor == null)
-			throw new NullPointerException("Next accessor name is null");
-
 		final String this0 = "this$0";
 		final String innerDesc = Type.getObjectType(name).getDescriptor();
 		final String outerDesc = Type.getObjectType(outerClass).getDescriptor();
@@ -73,7 +70,7 @@ public final class FieldReadGenerator extends InsteadActionGenerator {
 			methodVisitor.visitLabel(l0);
 			methodVisitor.visitVarInsn(ALOAD, 0);
 			methodVisitor.visitFieldInsn(GETFIELD, name, this0, outerDesc);
-			methodVisitor.visitMethodInsn(INVOKESTATIC, outerClass, nextAccessor, accessorDesc, false);
+			methodVisitor.visitMethodInsn(INVOKESTATIC, outerClass, accessorName, accessorDesc, false);
 			box(methodVisitor, fieldDesc);
 			methodVisitor.visitInsn(ARETURN);
 			Label l1 = new Label();
@@ -96,9 +93,7 @@ public final class FieldReadGenerator extends InsteadActionGenerator {
 
 	@Override
 	public void modifyOuterClass(MonitorClassAdapter adapter) {
-		nextAccessor = adapter.getNextAccessor();
-
-		MethodVisitor methodVisitor = adapter.getClassVisitor().visitMethod(ACC_STATIC | ACC_SYNTHETIC, nextAccessor,
+		MethodVisitor methodVisitor = adapter.getClassVisitor().visitMethod(ACC_STATIC | ACC_SYNTHETIC, accessorName,
 				accessorDesc, null, null);
 		methodVisitor.visitCode();
 		methodVisitor.visitVarInsn(ALOAD, 0);

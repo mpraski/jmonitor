@@ -4,14 +4,7 @@ import static com.mpraski.jmonitor.util.Constants.CLASS_DOUBLE;
 import static com.mpraski.jmonitor.util.Constants.CLASS_FLOAT;
 import static com.mpraski.jmonitor.util.Constants.CLASS_INTEGER;
 import static com.mpraski.jmonitor.util.Constants.CLASS_LONG;
-import static com.mpraski.jmonitor.util.Constants.INSNS_DOUBLE;
-import static com.mpraski.jmonitor.util.Constants.INSNS_FLOAT;
-import static com.mpraski.jmonitor.util.Constants.INSNS_INT;
-import static com.mpraski.jmonitor.util.Constants.INSNS_LONG;
 import static com.mpraski.jmonitor.util.Constants.INSNS_REF;
-import static com.mpraski.jmonitor.util.Constants.eventOrder;
-import static com.mpraski.jmonitor.util.Constants.eventType;
-import static com.mpraski.jmonitor.util.Constants.getPrimitiveClass;
 import static com.mpraski.jmonitor.util.Constants.insteadMonitorClass;
 import static com.mpraski.jmonitor.util.Constants.insteadMonitorClassFunc;
 import static com.mpraski.jmonitor.util.Constants.insteadMonitorClassFuncType;
@@ -25,6 +18,12 @@ import static com.mpraski.jmonitor.util.Constants.typeOfDouble;
 import static com.mpraski.jmonitor.util.Constants.typeOfFloat;
 import static com.mpraski.jmonitor.util.Constants.typeOfInteger;
 import static com.mpraski.jmonitor.util.Constants.typeOfLong;
+import static com.mpraski.jmonitor.util.Utils.eventOrder;
+import static com.mpraski.jmonitor.util.Utils.getPrimitiveClass;
+import static com.mpraski.jmonitor.util.Utils.getPrimitiveInsns;
+import static com.mpraski.jmonitor.util.Utils.isReference;
+import static com.mpraski.jmonitor.util.Utils.takesTwoWords;
+import static com.mpraski.jmonitor.util.Utils.toDots;
 
 import java.util.List;
 import java.util.Map;
@@ -42,6 +41,7 @@ import com.mpraski.jmonitor.EventType;
 import com.mpraski.jmonitor.instead.FieldReadGenerator;
 import com.mpraski.jmonitor.instead.InsteadActionGenerator;
 import com.mpraski.jmonitor.util.Pair;
+import com.mpraski.jmonitor.util.Utils;
 
 /*
  * This MethodVisitor is responsible for injecting appropriate bytecode instructions to perform instrumentation.
@@ -624,18 +624,16 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 	private void visitReadInstead(EventData e) {
 		Type oldType = Type.getType(e.getDesc());
-		Type type = Type.getObjectType(thisOwner);
+		Type ownerType = Type.getObjectType(thisOwner);
+		String nextInnerClass = adapter.getNextInnerClass();
+		String nextAccessor = adapter.getNextAccessor();
 
-		InsteadActionGenerator g = new FieldReadGenerator(adapter.getNextInnerClass(), thisOwner, originalName,
-				thisDesc, "(" + type.getDescriptor() + ")" + e.getDesc(), e.getName(), e.getDesc());
+		InsteadActionGenerator action = new FieldReadGenerator(nextInnerClass, thisOwner, originalName, thisDesc,
+				nextAccessor, "(" + ownerType.getDescriptor() + ")" + e.getDesc(), e.getName(), e.getDesc());
 
-		adapter.addActionGenerator(g);
+		adapter.addActionGenerator(action);
 
-		super.visitTypeInsn(NEW, g.getName());
-		super.visitInsn(DUP);
-		super.visitIntInsn(ALOAD, 0);
-		super.visitMethodInsn(INVOKESPECIAL, g.getName(), "<init>", "(" + type.getDescriptor() + ")V", false);
-
+		newInsteadAction(action, ownerType);
 		visitEventStartWithSwap(e);
 		super.visitInsn(ACONST_NULL);
 		visitEventEndWithAction(e);
@@ -724,7 +722,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		else
 			super.visitLdcInsn(e.getTag());
 
-		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/EventType", eventType(e.getType()),
+		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/EventType", Utils.eventType(e.getType()),
 				"Lcom/mpraski/jmonitor/EventType;");
 
 		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/EventOrder", eventOrder(e.getOrder()),
@@ -753,7 +751,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 		super.visitInsn(SWAP);
 
-		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/EventType", eventType(e.getType()),
+		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/EventType", Utils.eventType(e.getType()),
 				"Lcom/mpraski/jmonitor/EventType;");
 
 		super.visitInsn(SWAP);
@@ -819,6 +817,13 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 				false);
 		super.visitMethodInsn(INVOKEINTERFACE, insteadMonitorClass, insteadMonitorClassFunc,
 				insteadMonitorClassFuncType, true);
+	}
+
+	private void newInsteadAction(InsteadActionGenerator action, Type ownerType) {
+		super.visitTypeInsn(NEW, action.getName());
+		super.visitInsn(DUP);
+		super.visitIntInsn(ALOAD, 0);
+		super.visitMethodInsn(INVOKESPECIAL, action.getName(), "<init>", Utils.constructorOf(ownerType), false);
 	}
 
 	private void pushInt(int i) {
@@ -959,30 +964,5 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 			super.visitTypeInsn(CHECKCAST, CLASS_FLOAT.getKey());
 			super.visitMethodInsn(INVOKEVIRTUAL, CLASS_FLOAT.getKey(), "floatValue", "()F", false);
 		}
-	}
-
-	private static boolean isReference(Type type) {
-		return type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY;
-	}
-
-	private static Pair<Integer, Integer> getPrimitiveInsns(Type t) {
-		if (t.equals(Type.INT_TYPE))
-			return INSNS_INT;
-		else if (t.equals(Type.FLOAT_TYPE))
-			return INSNS_FLOAT;
-		else if (t.equals(Type.LONG_TYPE))
-			return INSNS_LONG;
-		else if (t.equals(Type.DOUBLE_TYPE))
-			return INSNS_DOUBLE;
-
-		return INSNS_REF;
-	}
-
-	private static String toDots(String s) {
-		return s.replace('/', '.');
-	}
-
-	private static boolean takesTwoWords(Type type) {
-		return type.equals(Type.LONG_TYPE) || type.equals(Type.DOUBLE_TYPE);
 	}
 }

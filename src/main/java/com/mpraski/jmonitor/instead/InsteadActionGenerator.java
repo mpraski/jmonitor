@@ -1,11 +1,16 @@
 package com.mpraski.jmonitor.instead;
 
-import static com.mpraski.jmonitor.util.Constants.getPrimitiveClass;
+import static com.mpraski.jmonitor.util.Constants.CLASS_DOUBLE;
+import static com.mpraski.jmonitor.util.Constants.CLASS_FLOAT;
+import static com.mpraski.jmonitor.util.Constants.CLASS_INTEGER;
+import static com.mpraski.jmonitor.util.Constants.CLASS_LONG;
+import static com.mpraski.jmonitor.util.Utils.getPrimitiveClass;
 
 import java.util.regex.Pattern;
 
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
 import com.mpraski.jmonitor.util.Pair;
@@ -56,6 +61,22 @@ public abstract class InsteadActionGenerator implements Opcodes {
 		Pair<String, String> type = getPrimitiveClass(desc);
 
 		mv.visitMethodInsn(INVOKESTATIC, type.getKey(), "valueOf", type.getValue(), false);
+	}
+
+	protected void unbox(MethodVisitor mv, Type type) {
+		if (type.equals(Type.LONG_TYPE)) {
+			mv.visitTypeInsn(CHECKCAST, CLASS_LONG.getKey());
+			mv.visitMethodInsn(INVOKEVIRTUAL, CLASS_LONG.getKey(), "longValue", "()J", false);
+		} else if (type.equals(Type.DOUBLE_TYPE)) {
+			mv.visitTypeInsn(CHECKCAST, CLASS_DOUBLE.getKey());
+			mv.visitMethodInsn(INVOKEVIRTUAL, CLASS_DOUBLE.getKey(), "doubleValue", "()D", false);
+		} else if (type.equals(Type.INT_TYPE)) {
+			mv.visitTypeInsn(CHECKCAST, CLASS_INTEGER.getKey());
+			mv.visitMethodInsn(INVOKEVIRTUAL, CLASS_INTEGER.getKey(), "intValue", "()I", false);
+		} else if (type.equals(Type.FLOAT_TYPE)) {
+			mv.visitTypeInsn(CHECKCAST, CLASS_FLOAT.getKey());
+			mv.visitMethodInsn(INVOKEVIRTUAL, CLASS_FLOAT.getKey(), "floatValue", "()F", false);
+		}
 	}
 
 	protected static int getReturnInsn(String desc) {

@@ -82,7 +82,8 @@ public class Dummy {
 
 			@Override
 			public Object doAction(Object[] arguments) {
-				return gosh;
+				mumbo = (long) arguments[0];
+				return null;
 			}
 
 		};

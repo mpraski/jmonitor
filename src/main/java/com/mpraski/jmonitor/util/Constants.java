@@ -4,8 +4,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import com.mpraski.jmonitor.Event;
-import com.mpraski.jmonitor.EventOrder;
-import com.mpraski.jmonitor.EventType;
 
 public final class Constants implements Opcodes {
 	public static final String monitorClassType = "Lcom/mpraski/jmonitor/Monitor;";
@@ -39,109 +37,4 @@ public final class Constants implements Opcodes {
 	public static final Pair<Integer, Integer> INSNS_FLOAT = new Pair<>(FSTORE, FLOAD);
 	public static final Pair<Integer, Integer> INSNS_DOUBLE = new Pair<>(DSTORE, DLOAD);
 	public static final Pair<Integer, Integer> INSNS_LONG = new Pair<>(LSTORE, LLOAD);
-
-	public static String eventType(EventType type) {
-		String s = null;
-
-		switch (type) {
-		case FIELD_READ:
-			s = "FIELD_READ";
-			break;
-		case FIELD_WRITE:
-			s = "FIELD_WRITE";
-			break;
-		case FIELD_READ_STATIC:
-			s = "FIELD_READ_STATIC";
-			break;
-		case FIELD_WRITE_STATIC:
-			s = "FIELD_WRITE_STATIC";
-			break;
-		case METHOD_CALL:
-			s = "METHOD_CALL";
-			break;
-		case RETURN:
-			s = "RETURN";
-			break;
-		case THROW:
-			s = "THROW";
-			break;
-		case INSTANCE:
-			s = "INSTANCE";
-			break;
-		case INSTANCE_ARRAY:
-			s = "INSTANCE_ARRAY";
-			break;
-		case MONITOR_ENTER:
-			s = "MONITOR_ENTER";
-			break;
-		case MONITOR_EXIT:
-			s = "MONITOR_EXIT";
-			break;
-		case ANY:
-			s = "ANY";
-			break;
-		case AND:
-			s = "AND";
-			break;
-		case OR:
-			s = "OR";
-			break;
-		case NOT:
-			s = "NOT";
-			break;
-		}
-
-		return s;
-	}
-
-	public static String eventOrder(EventOrder order) {
-		String s = null;
-
-		switch (order) {
-		case BEFORE:
-			s = "BEFORE";
-			break;
-		case AFTER:
-			s = "AFTER";
-			break;
-		case INSTEAD:
-			s = "INSTEAD";
-			break;
-		}
-
-		return s;
-	}
-
-	public static Pair<String, String> getPrimitiveClass(String desc) {
-		Pair<String, String> type = null;
-
-		switch (desc) {
-		case "Z":
-			type = CLASS_BOOLEAN;
-			break;
-		case "C":
-			type = CLASS_CHARACTER;
-			break;
-		case "B":
-			type = CLASS_BYTE;
-			break;
-		case "S":
-			type = ClASS_SHORT;
-			break;
-		case "I":
-			type = CLASS_INTEGER;
-			break;
-		case "F":
-			type = CLASS_FLOAT;
-			break;
-		case "J":
-			type = CLASS_LONG;
-			break;
-		case "D":
-			type = CLASS_DOUBLE;
-			break;
-		}
-
-		return type;
-	}
 }

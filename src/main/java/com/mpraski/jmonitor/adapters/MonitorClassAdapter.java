@@ -25,7 +25,7 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 	private String owner;
 	private String source;
 	private int accessorIndex;
-	private int innerClassIndex = 1;
+	private int innerClassIndex;
 
 	public MonitorClassAdapter(ClassVisitor classVisitor, List<EventPatternMatcher> matchers,
 			Map<EventType, List<EventPatternMatcher>> mapped) {
@@ -58,10 +58,6 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 
 	public void addActionGenerator(InsteadActionGenerator a) {
 		actionGenerators.add(a);
-	}
-
-	protected void addInnerClass(InsteadActionGenerator a) {
-		cv.visitInnerClass(a.getName(), a.getOuterName(), a.getSimpleName(), 0);
 	}
 
 	@Override
