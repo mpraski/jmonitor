@@ -19,6 +19,8 @@ public class Dummy {
 		d.lil();
 		d.setLol();
 		System.out.println("Showing int: " + d.writeInt());
+		d.setLol2();
+		System.out.println("Value of lel: " + d.lel);
 		try {
 			d.writeMumbo(false);
 		} catch (Exception e) {
@@ -48,6 +50,10 @@ public class Dummy {
 
 	public void setLol() {
 		this.lel = "lulu";
+	}
+
+	public void setLol2() {
+		this.lel = "something";
 	}
 
 	public void setLis(int f) {
@@ -82,7 +88,7 @@ public class Dummy {
 
 			@Override
 			public Object doAction(Object[] arguments) {
-				mumbo = (long) arguments[0];
+				mumbo = (double) arguments[0];
 				return null;
 			}
 

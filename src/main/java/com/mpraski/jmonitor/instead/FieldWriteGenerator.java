@@ -1,6 +1,6 @@
 package com.mpraski.jmonitor.instead;
 
-import static com.mpraski.jmonitor.util.Utils.getPrimitiveInsns;
+import static com.mpraski.jmonitor.util.Utils.getLoadStoreInsns;
 import static com.mpraski.jmonitor.util.Utils.isReference;
 
 import org.objectweb.asm.ClassWriter;
@@ -17,7 +17,7 @@ public final class FieldWriteGenerator extends InsteadActionGenerator {
 	private final String accessorDesc;
 	private final String fieldName;
 	private final String fieldDesc;
-	final Type fieldType;
+	private final Type fieldType;
 
 	public FieldWriteGenerator(String innerClass, String outerClass, String methodName, String methodDesc,
 			String accessorName, String accessorDesc, String fieldName, String fieldDesc) {
@@ -113,7 +113,7 @@ public final class FieldWriteGenerator extends InsteadActionGenerator {
 				accessorDesc, null, null);
 		methodVisitor.visitCode();
 		methodVisitor.visitVarInsn(ALOAD, 0);
-		methodVisitor.visitVarInsn(getPrimitiveInsns(fieldType).getValue(), 0);
+		methodVisitor.visitVarInsn(getLoadStoreInsns(fieldType).getValue(), 1);
 		methodVisitor.visitFieldInsn(PUTFIELD, outerClass, fieldName, fieldDesc);
 		methodVisitor.visitInsn(RETURN);
 		methodVisitor.visitMaxs(3, 3);

@@ -19,8 +19,8 @@ import static com.mpraski.jmonitor.util.Constants.typeOfFloat;
 import static com.mpraski.jmonitor.util.Constants.typeOfInteger;
 import static com.mpraski.jmonitor.util.Constants.typeOfLong;
 import static com.mpraski.jmonitor.util.Utils.eventOrder;
+import static com.mpraski.jmonitor.util.Utils.getLoadStoreInsns;
 import static com.mpraski.jmonitor.util.Utils.getPrimitiveClass;
-import static com.mpraski.jmonitor.util.Utils.getPrimitiveInsns;
 import static com.mpraski.jmonitor.util.Utils.isReference;
 import static com.mpraski.jmonitor.util.Utils.takesTwoWords;
 import static com.mpraski.jmonitor.util.Utils.toDots;
@@ -39,6 +39,7 @@ import com.mpraski.jmonitor.EventOrder;
 import com.mpraski.jmonitor.EventPatternMatcher;
 import com.mpraski.jmonitor.EventType;
 import com.mpraski.jmonitor.instead.FieldReadGenerator;
+import com.mpraski.jmonitor.instead.FieldWriteGenerator;
 import com.mpraski.jmonitor.instead.InsteadActionGenerator;
 import com.mpraski.jmonitor.util.Pair;
 import com.mpraski.jmonitor.util.Utils;
@@ -466,6 +467,9 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		case FIELD_READ:
 			eventsInstead.forEach(this::visitReadInstead);
 			break;
+		case FIELD_WRITE:
+			eventsInstead.forEach(this::visitWriteInstead);
+			break;
 		}
 	}
 
@@ -646,6 +650,38 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		shouldPreserveOriginal = false;
 	}
 
+	private void visitWriteInstead(EventData e) {
+		Type oldType = Type.getType(e.getDesc());
+		Type ownerType = Type.getObjectType(thisOwner);
+		String nextInnerClass = adapter.getNextInnerClass();
+		String nextAccessor = adapter.getNextAccessor();
+
+		InsteadActionGenerator action = new FieldWriteGenerator(nextInnerClass, thisOwner, originalName, thisDesc,
+				nextAccessor, "(" + ownerType.getDescriptor() + e.getDesc() + ")V", e.getName(), e.getDesc());
+
+		adapter.addActionGenerator(action);
+
+		boxWithoutDup(oldType);
+
+		super.visitInsn(ICONST_1);
+		super.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+		super.visitInsn(DUP_X1);
+		super.visitInsn(SWAP);
+		super.visitInsn(ICONST_0);
+		super.visitInsn(SWAP);
+		super.visitInsn(AASTORE);
+		int argsArray = captureLocal();
+
+		newInsteadAction(action, ownerType);
+		visitEventStartWithSwap(e);
+		super.visitVarInsn(ALOAD, argsArray);
+		visitEventEndWithAction(e);
+
+		super.visitInsn(POP);
+
+		shouldPreserveOriginal = false;
+	}
+
 	/*
 	 * Builds an array of indices of local variables added to preserve the arguments
 	 * of instrumented method in between the event generation. Also, the last entry
@@ -673,7 +709,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 			else
 				super.visitInsn(DUP);
 
-			Pair<Integer, Integer> insns = getPrimitiveInsns(topType);
+			Pair<Integer, Integer> insns = getLoadStoreInsns(topType);
 
 			int l = sorter.newLocal(topType);
 			super.visitVarInsn(insns.getKey(), l);

@@ -29,7 +29,7 @@ public final class Utils {
 		return type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY;
 	}
 
-	public static Pair<Integer, Integer> getPrimitiveInsns(Type t) {
+	public static Pair<Integer, Integer> getLoadStoreInsns(Type t) {
 		if (t.equals(Type.INT_TYPE))
 			return INSNS_INT;
 		else if (t.equals(Type.FLOAT_TYPE))
