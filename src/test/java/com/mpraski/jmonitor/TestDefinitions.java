@@ -38,8 +38,10 @@ public class TestDefinitions implements EventPatternDefinitions {
 				.doInstead("com.mpraski.dummy.DummyMonitor8");
 		EventPattern p20 = EventPattern.onFieldWrite().from("(.*)setLol2").of("(.*)lel")
 				.doInstead("com.mpraski.dummy.DummyMonitor9");
+		EventPattern p21 = EventPattern.onMethodCall().of("(.*)someMethod2")
+				.doInstead("com.mpraski.dummy.DummyMonitor10");
 
-		return Arrays.asList(p3, p6, p8, p10, p12, p13, p14, p15, p16, p17, p18, p19, p20);
+		return Arrays.asList(/* p3, p6, p8, p10, p12, p13, p14, p15, p16, p17, p19, p20, */ p21);
 	}
 
 }

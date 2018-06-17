@@ -1,7 +1,5 @@
 package com.mpraski.dummy;
 
-import java.math.BigInteger;
-
 import com.mpraski.jmonitor.InsteadAction;
 
 public class Dummy {
@@ -31,7 +29,15 @@ public class Dummy {
 		d.readWop();
 		d.writeObject();
 		d.doCall();
-		System.out.println(d.someMethod2());
+		/*
+		 * InsteadAction ia = new InsteadAction() {
+		 * 
+		 * @Override public Object doAction(Object[] arguments) { return
+		 * d.someMethod((double) arguments[0], (boolean) arguments[1], (String)
+		 * arguments[2], (int) arguments[3]); }
+		 * 
+		 * };
+		 */
 	}
 
 	public void sayHello() {
@@ -114,12 +120,14 @@ public class Dummy {
 		System.out.println("nope");
 	}
 
-	public BigInteger someMethod2() {
-		return new BigInteger("1000");
+	public String someMethod2(String a, int b, long c) {
+		System.out.println("someMethod2(" + a + ", " + b + ", " + c + ")");
+		return a;
 	}
 
 	public void doCall() {
 		someMethod(12.543543, true, "asdsa", 40);
 		nothingToSay();
+		System.out.println(someMethod2("beta", 2, 20));
 	}
 }

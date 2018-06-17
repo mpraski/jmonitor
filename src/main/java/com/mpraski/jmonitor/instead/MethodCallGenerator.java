@@ -74,14 +74,20 @@ public final class MethodCallGenerator extends InsteadActionGenerator {
 			methodVisitor.visitVarInsn(ALOAD, 0);
 			methodVisitor.visitFieldInsn(GETFIELD, name, this0, outerDesc);
 
+			Type type;
 			int maxStack = 2;
 			for (int i = 0; i < argTypes.size(); i++) {
-				maxStack += takesTwoWords(argTypes.get(i)) ? 2 : 1;
+				type = argTypes.get(i);
+				maxStack += takesTwoWords(type) ? 2 : 1;
 
 				methodVisitor.visitVarInsn(ALOAD, 1);
 				pushInt(methodVisitor, i);
 				methodVisitor.visitInsn(AALOAD);
-				// do casting
+
+				if (isReference(type))
+					methodVisitor.visitTypeInsn(CHECKCAST, type.getInternalName());
+				else
+					unbox(methodVisitor, type);
 			}
 
 			methodVisitor.visitMethodInsn(INVOKEVIRTUAL, outerClass, calleeName, calleeDesc, false);
@@ -89,7 +95,7 @@ public final class MethodCallGenerator extends InsteadActionGenerator {
 
 			Label l1 = new Label();
 			methodVisitor.visitLabel(l1);
-			methodVisitor.visitLocalVariable("this", "Lcom/mpraski/dummy/Dummy$1;", null, l0, l1, 0);
+			methodVisitor.visitLocalVariable("this", innerDesc, null, l0, l1, 0);
 			methodVisitor.visitLocalVariable("arguments", "[Ljava/lang/Object;", null, l0, l1, 1);
 			methodVisitor.visitMaxs(maxStack, 2);
 			methodVisitor.visitEnd();

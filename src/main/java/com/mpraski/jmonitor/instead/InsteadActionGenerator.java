@@ -13,10 +13,10 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
 import com.mpraski.jmonitor.util.Pair;
 
 /*
+ * TODO Add support for instrumenting methods called on instances.
  * Used to generate inner classes - instances of InsteadAction which execute 
  * instrumented code during the call to passThrough methods of Event class.
  * Four scenarios are to be expected:

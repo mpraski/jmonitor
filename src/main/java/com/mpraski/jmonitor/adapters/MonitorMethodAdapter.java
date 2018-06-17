@@ -25,9 +25,10 @@ import static com.mpraski.jmonitor.util.Utils.isReference;
 import static com.mpraski.jmonitor.util.Utils.takesTwoWords;
 import static com.mpraski.jmonitor.util.Utils.toDots;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
@@ -247,7 +248,8 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 		instrumentBefore();
 		instrumentInstead();
-		super.visitMethodInsn(opcode, owner, name, desc, isInterface);
+		if (shouldPreserveOriginal)
+			super.visitMethodInsn(opcode, owner, name, desc, isInterface);
 		instrumentAfter();
 	}
 
@@ -477,6 +479,9 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		case FIELD_WRITE:
 			eventsInstead.forEach(this::visitWriteInstead);
 			break;
+		case METHOD_CALL:
+			eventsInstead.forEach(this::visitMethodCallInstead);
+			break;
 		}
 	}
 
@@ -693,25 +698,41 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		Type ownerType = Type.getObjectType(thisOwner);
 		Type retType = e.getRetType();
 		String nextInnerClass = adapter.getNextInnerClass();
+		String[] parts = e.getName().split(Pattern.quote("."));
+		String methodName = parts[parts.length - 1];
 
-		Pair<Integer, List<Type>> data = captureArgumentsArray(e.getNumArgs());
+		System.out.println(stack);
+
+		Pair<Integer, List<Type>> arrayAndTypes = captureArgumentsArray(e.getNumArgs());
+
+		System.out.println(stack);
 
 		super.visitInsn(POP);
 
+		System.out.println(stack);
+		System.out.println(thisDesc);
+
 		InsteadActionGenerator action = new MethodCallGenerator(nextInnerClass, thisOwner, originalName, thisDesc,
-				e.getName(), e.getDesc(), data.getValue());
+				methodName, e.getDesc(), arrayAndTypes.getValue());
 
 		adapter.addActionGenerator(action);
 
 		newInsteadAction(action, ownerType);
+		System.out.println(stack);
 		visitEventStartWithSwap(e);
-		super.visitVarInsn(ALOAD, data.getKey());
+		System.out.println(stack);
+		super.visitVarInsn(ALOAD, arrayAndTypes.getKey());
+		System.out.println(stack);
 		visitEventEndWithAction(e);
+
+		System.out.println(stack);
 
 		if (isReference(retType))
 			super.visitTypeInsn(CHECKCAST, retType.getInternalName());
 		else
 			unbox(retType);
+
+		System.out.println(stack);
 
 		shouldPreserveOriginal = false;
 	}
@@ -774,7 +795,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	private Pair<Integer, List<Type>> captureArgumentsArray(int numArgs) {
-		List<Type> types = new ArrayList<>(numArgs);
+		List<Type> types = Arrays.asList(new Type[numArgs]);
 
 		pushInt(numArgs);
 		super.visitTypeInsn(ANEWARRAY, "java/lang/Object");
@@ -787,7 +808,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		for (int i = numArgs - 1; i >= 0; i--) {
 			topType = getTopType();
 
-			types.add(i, topType);
+			types.set(i, topType);
 
 			super.visitVarInsn(ALOAD, methodArgs);
 

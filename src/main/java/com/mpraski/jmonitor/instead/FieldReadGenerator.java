@@ -7,8 +7,6 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
-import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
-
 public final class FieldReadGenerator extends InsteadActionGenerator {
 
 	private final String accessorName;

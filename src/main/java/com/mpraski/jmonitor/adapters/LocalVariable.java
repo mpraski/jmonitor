@@ -1,9 +1,5 @@
 package com.mpraski.jmonitor.adapters;
 
-import java.util.Objects;
-
-import org.objectweb.asm.Type;
-
 public final class LocalVariable {
 	public LocalVariable(int index, int loadInsn) {
 		this.index = index;

@@ -17,10 +17,11 @@ import com.mpraski.jmonitor.instead.InsteadActionGenerator;
 public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 
 	private final List<EventPatternMatcher> matchers;
-	private final Map<EventType, List<EventPatternMatcher>> mapped;
-	private final Map<EventPatternMatcher, Boolean> matchesFrom;
 	private final List<EventData> eventsBefore, eventsAfter, eventsInstead;
 	private final List<InsteadActionGenerator> actionGenerators;
+
+	private final Map<EventType, List<EventPatternMatcher>> mapped;
+	private final Map<EventPatternMatcher, Boolean> matchesFrom;
 
 	private String owner;
 	private String source;

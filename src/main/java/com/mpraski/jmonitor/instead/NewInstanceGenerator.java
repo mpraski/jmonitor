@@ -2,8 +2,6 @@ package com.mpraski.jmonitor.instead;
 
 import org.objectweb.asm.ClassVisitor;
 
-import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
-
 public final class NewInstanceGenerator extends InsteadActionGenerator {
 
 	public NewInstanceGenerator(String innerClass, String outerClass, String methodName, String methodDesc) {
