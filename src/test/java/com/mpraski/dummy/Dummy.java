@@ -88,8 +88,8 @@ public class Dummy {
 
 			@Override
 			public Object doAction(Object[] arguments) {
-				mumbo = (double) arguments[0];
-				return null;
+				return someMethod((double) arguments[0], (boolean) arguments[1], (String) arguments[2],
+						(int) arguments[3]);
 			}
 
 		};
@@ -105,8 +105,9 @@ public class Dummy {
 		return new Object();
 	}
 
-	public void someMethod(double a, boolean b, String c, int d) {
+	public Object someMethod(double a, boolean b, String c, int d) {
 		System.out.println("someMethod(" + a + ", " + b + ", " + c + ")");
+		return null;
 	}
 
 	public void nothingToSay() {

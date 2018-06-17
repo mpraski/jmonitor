@@ -1,5 +1,6 @@
 package com.mpraski.jmonitor.instead;
 
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
@@ -92,9 +93,9 @@ public final class FieldReadGenerator extends InsteadActionGenerator {
 	}
 
 	@Override
-	public void modifyOuterClass(MonitorClassAdapter adapter) {
-		MethodVisitor methodVisitor = adapter.getClassVisitor().visitMethod(ACC_STATIC | ACC_SYNTHETIC, accessorName,
-				accessorDesc, null, null);
+	public void modifyOuterClass(ClassVisitor cv) {
+		MethodVisitor methodVisitor = cv.visitMethod(ACC_STATIC | ACC_SYNTHETIC, accessorName, accessorDesc, null,
+				null);
 		methodVisitor.visitCode();
 		methodVisitor.visitVarInsn(ALOAD, 0);
 		methodVisitor.visitFieldInsn(GETFIELD, outerClass, fieldName, fieldDesc);

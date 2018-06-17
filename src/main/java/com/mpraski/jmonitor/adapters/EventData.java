@@ -1,5 +1,7 @@
 package com.mpraski.jmonitor.adapters;
 
+import org.objectweb.asm.Type;
+
 import com.mpraski.jmonitor.EventOrder;
 import com.mpraski.jmonitor.EventType;
 
@@ -30,13 +32,16 @@ public final class EventData {
 		this.name = name;
 	}
 
-	public EventData(EventType type, String tag, String monitor, EventOrder order, String name, int numArgs) {
+	public EventData(EventType type, String tag, String monitor, EventOrder order, String name, int numArgs,
+			String desc, Type retType) {
 		this.type = type;
 		this.tag = tag;
 		this.monitor = monitor;
 		this.order = order;
 		this.name = name;
 		this.numArgs = numArgs;
+		this.desc = desc;
+		this.retType = retType;
 	}
 
 	private final EventType type;
@@ -47,6 +52,11 @@ public final class EventData {
 	private String desc;
 	private String owner;
 	private int numArgs;
+	private Type retType;
+
+	public Type getRetType() {
+		return retType;
+	}
 
 	public EventType getType() {
 		return type;

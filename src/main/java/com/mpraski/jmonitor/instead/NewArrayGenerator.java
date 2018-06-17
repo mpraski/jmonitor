@@ -1,5 +1,7 @@
 package com.mpraski.jmonitor.instead;
 
+import org.objectweb.asm.ClassVisitor;
+
 import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
 
 public final class NewArrayGenerator extends InsteadActionGenerator {
@@ -22,9 +24,8 @@ public final class NewArrayGenerator extends InsteadActionGenerator {
 	}
 
 	@Override
-	public void modifyOuterClass(MonitorClassAdapter adapter) {
-		// TODO Auto-generated method stub
-
+	public void modifyOuterClass(ClassVisitor cv) {
+		throw new UnsupportedOperationException();
 	}
 
 }

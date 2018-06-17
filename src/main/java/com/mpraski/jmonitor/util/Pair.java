@@ -3,8 +3,7 @@ package com.mpraski.jmonitor.util;
 import java.util.Comparator;
 import java.util.Objects;
 
-public final class Pair<K extends Comparable<? super K>, V extends Comparable<? super V>>
-		implements Comparable<Pair<K, V>> {
+public final class Pair<K extends Comparable<? super K>, V> implements Comparable<Pair<K, V>> {
 	private final K key;
 	private final V value;
 
@@ -43,7 +42,7 @@ public final class Pair<K extends Comparable<? super K>, V extends Comparable<? 
 
 	@Override
 	public int compareTo(Pair<K, V> o) {
-		return Comparator.comparing(Pair<K, V>::getKey).thenComparing(Pair<K, V>::getValue).compare(this, o);
+		return Comparator.comparing(Pair<K, V>::getKey).compare(this, o);
 	}
 
 	@Override

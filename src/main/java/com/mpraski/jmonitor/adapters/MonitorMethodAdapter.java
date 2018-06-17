@@ -25,6 +25,7 @@ import static com.mpraski.jmonitor.util.Utils.isReference;
 import static com.mpraski.jmonitor.util.Utils.takesTwoWords;
 import static com.mpraski.jmonitor.util.Utils.toDots;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -41,6 +42,7 @@ import com.mpraski.jmonitor.EventType;
 import com.mpraski.jmonitor.instead.FieldReadGenerator;
 import com.mpraski.jmonitor.instead.FieldWriteGenerator;
 import com.mpraski.jmonitor.instead.InsteadActionGenerator;
+import com.mpraski.jmonitor.instead.MethodCallGenerator;
 import com.mpraski.jmonitor.util.Pair;
 import com.mpraski.jmonitor.util.Utils;
 
@@ -227,19 +229,19 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 
 		String methodOwner = toDots(owner);
 		String methodName = methodOwner + '.' + name;
-		int numArgs = Type.getMethodType(desc).getArgumentTypes().length;
+		Type type = Type.getMethodType(desc);
 
 		switch (opcode) {
 		case INVOKESPECIAL:
 			if (name.equals("<init>"))
 				tryMatch(EventType.INSTANCE, methodOwner, EventOrder.AFTER);
 			else
-				tryMatch(EventType.METHOD_CALL, methodName, numArgs);
+				tryMatch(EventType.METHOD_CALL, methodName, type);
 			break;
 		case INVOKESTATIC:
 		case INVOKEVIRTUAL:
 		case INVOKEINTERFACE:
-			tryMatch(EventType.METHOD_CALL, methodName, numArgs);
+			tryMatch(EventType.METHOD_CALL, methodName, type);
 			break;
 		}
 
@@ -272,10 +274,10 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		currentType = type;
 	}
 
-	private void tryMatch(EventType type, String of, int numArgs) {
+	private void tryMatch(EventType type, String of, Type methodType) {
 		for (EventPatternMatcher m : mapped.get(type))
 			if (matchesFrom.get(m) && m.matchesOf(of))
-				addMonitors(m, of, numArgs);
+				addMonitors(m, of, methodType);
 
 		currentType = type;
 	}
@@ -382,9 +384,14 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		}
 	}
 
-	private void addMonitors(EventPatternMatcher e, String of, int numArgs) {
+	private void addMonitors(EventPatternMatcher e, String of, Type methodType) {
+		int numArgs = methodType.getArgumentTypes().length;
+		String desc = methodType.getDescriptor();
+		Type ret = methodType.getReturnType();
+
 		for (EventMonitor m : e.getMonitors()) {
-			EventData d = new EventData(e.getType(), e.getTag(), m.getFieldName(), m.getOrder(), of, numArgs);
+			EventData d = new EventData(e.getType(), e.getTag(), m.getFieldName(), m.getOrder(), of, numArgs, desc,
+					ret);
 			switch (m.getOrder()) {
 			case BEFORE:
 				eventsBefore.add(d);
@@ -682,6 +689,33 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		shouldPreserveOriginal = false;
 	}
 
+	private void visitMethodCallInstead(EventData e) {
+		Type ownerType = Type.getObjectType(thisOwner);
+		Type retType = e.getRetType();
+		String nextInnerClass = adapter.getNextInnerClass();
+
+		Pair<Integer, List<Type>> data = captureArgumentsArray(e.getNumArgs());
+
+		super.visitInsn(POP);
+
+		InsteadActionGenerator action = new MethodCallGenerator(nextInnerClass, thisOwner, originalName, thisDesc,
+				e.getName(), e.getDesc(), data.getValue());
+
+		adapter.addActionGenerator(action);
+
+		newInsteadAction(action, ownerType);
+		visitEventStartWithSwap(e);
+		super.visitVarInsn(ALOAD, data.getKey());
+		visitEventEndWithAction(e);
+
+		if (isReference(retType))
+			super.visitTypeInsn(CHECKCAST, retType.getInternalName());
+		else
+			unbox(retType);
+
+		shouldPreserveOriginal = false;
+	}
+
 	/*
 	 * Builds an array of indices of local variables added to preserve the arguments
 	 * of instrumented method in between the event generation. Also, the last entry
@@ -737,6 +771,43 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		localsVars[numArgs] = new LocalVariable(methodArgs, 0);
 
 		return localsVars;
+	}
+
+	private Pair<Integer, List<Type>> captureArgumentsArray(int numArgs) {
+		List<Type> types = new ArrayList<>(numArgs);
+
+		pushInt(numArgs);
+		super.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+
+		int methodArgs = sorter.newLocal(typeOfArray);
+		super.visitVarInsn(ASTORE, methodArgs);
+
+		Type topType;
+
+		for (int i = numArgs - 1; i >= 0; i--) {
+			topType = getTopType();
+
+			types.add(i, topType);
+
+			super.visitVarInsn(ALOAD, methodArgs);
+
+			if (takesTwoWords(topType)) {
+				super.visitInsn(DUP_X2);
+				super.visitInsn(POP);
+			} else {
+				super.visitInsn(SWAP);
+			}
+
+			if (!isReference(topType))
+				boxWithoutDup(topType);
+
+			pushInt(i);
+
+			super.visitInsn(SWAP);
+			super.visitInsn(AASTORE);
+		}
+
+		return new Pair<>(methodArgs, types);
 	}
 
 	/*

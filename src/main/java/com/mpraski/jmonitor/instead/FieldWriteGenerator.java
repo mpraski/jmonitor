@@ -3,6 +3,7 @@ package com.mpraski.jmonitor.instead;
 import static com.mpraski.jmonitor.util.Utils.getLoadStoreInsns;
 import static com.mpraski.jmonitor.util.Utils.isReference;
 
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
@@ -108,9 +109,9 @@ public final class FieldWriteGenerator extends InsteadActionGenerator {
 	}
 
 	@Override
-	public void modifyOuterClass(MonitorClassAdapter adapter) {
-		MethodVisitor methodVisitor = adapter.getClassVisitor().visitMethod(ACC_STATIC | ACC_SYNTHETIC, accessorName,
-				accessorDesc, null, null);
+	public void modifyOuterClass(ClassVisitor cv) {
+		MethodVisitor methodVisitor = cv.visitMethod(ACC_STATIC | ACC_SYNTHETIC, accessorName, accessorDesc, null,
+				null);
 		methodVisitor.visitCode();
 		methodVisitor.visitVarInsn(ALOAD, 0);
 		methodVisitor.visitVarInsn(getLoadStoreInsns(fieldType).getValue(), 1);

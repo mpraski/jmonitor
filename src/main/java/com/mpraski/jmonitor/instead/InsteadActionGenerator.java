@@ -8,6 +8,7 @@ import static com.mpraski.jmonitor.util.Utils.getPrimitiveClass;
 
 import java.util.regex.Pattern;
 
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -63,7 +64,7 @@ public abstract class InsteadActionGenerator implements Opcodes {
 		mv.visitMethodInsn(INVOKESTATIC, type.getKey(), "valueOf", type.getValue(), false);
 	}
 
-	protected void unbox(MethodVisitor mv, Type type) {
+	protected static void unbox(MethodVisitor mv, Type type) {
 		if (type.equals(Type.LONG_TYPE)) {
 			mv.visitTypeInsn(CHECKCAST, CLASS_LONG.getKey());
 			mv.visitMethodInsn(INVOKEVIRTUAL, CLASS_LONG.getKey(), "longValue", "()J", false);
@@ -101,6 +102,37 @@ public abstract class InsteadActionGenerator implements Opcodes {
 		throw new IllegalStateException("Unidentified primitive: " + desc);
 	}
 
+	protected static void pushInt(MethodVisitor mv, int i) {
+		if (i < 6) {
+			switch (i) {
+			case 0:
+				mv.visitInsn(ICONST_0);
+				break;
+			case 1:
+				mv.visitInsn(ICONST_1);
+				break;
+			case 2:
+				mv.visitInsn(ICONST_2);
+				break;
+			case 3:
+				mv.visitInsn(ICONST_3);
+				break;
+			case 4:
+				mv.visitInsn(ICONST_4);
+				break;
+			case 5:
+				mv.visitInsn(ICONST_5);
+				break;
+			}
+		} else if (i > 5 && i < 128) {
+			mv.visitIntInsn(BIPUSH, i);
+		} else if (i > 127 && i < 32768) {
+			mv.visitIntInsn(SIPUSH, i);
+		} else {
+			mv.visitLdcInsn(i);
+		}
+	}
+
 	/*
 	 * Generate the inner class representing the InsteadAction instance.
 	 */
@@ -115,5 +147,5 @@ public abstract class InsteadActionGenerator implements Opcodes {
 	/*
 	 * While the class is still being instrumented, add appropriate code.
 	 */
-	public abstract void modifyOuterClass(MonitorClassAdapter adapter);
+	public abstract void modifyOuterClass(ClassVisitor cv);
 }

@@ -40,23 +40,19 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 		this.actionGenerators = new ArrayList<>();
 	}
 
-	public String getNextInnerClass() {
-		return String.valueOf(innerClassIndex++);
-	}
-
-	public String getNextAccessor() {
-		return "access$" + (accessorIndex++);
-	}
-
-	public ClassVisitor getClassVisitor() {
-		return cv;
-	}
-
 	public List<InsteadActionGenerator> getActionGenerators() {
 		return actionGenerators;
 	}
 
-	public void addActionGenerator(InsteadActionGenerator a) {
+	protected String getNextInnerClass() {
+		return String.valueOf(innerClassIndex++);
+	}
+
+	protected String getNextAccessor() {
+		return "access$" + (accessorIndex++);
+	}
+
+	protected void addActionGenerator(InsteadActionGenerator a) {
 		actionGenerators.add(a);
 	}
 
@@ -91,7 +87,7 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 			cv.visitInnerClass(g.getName(), g.getOuterName(), g.getSimpleName(), 0);
 
 			if (g.modifiesOuterClass())
-				g.modifyOuterClass(this);
+				g.modifyOuterClass(cv);
 		}
 
 		cv.visitEnd();
