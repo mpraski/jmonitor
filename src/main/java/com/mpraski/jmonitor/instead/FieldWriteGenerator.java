@@ -1,7 +1,7 @@
 package com.mpraski.jmonitor.instead;
 
-import static com.mpraski.jmonitor.util.Operations.getLoadStoreInsns;
-import static com.mpraski.jmonitor.util.Operations.isReference;
+import static com.mpraski.jmonitor.util.TypeUtil.getLoadStoreInsns;
+import static com.mpraski.jmonitor.util.TypeUtil.isReference;
 
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -9,6 +9,8 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
+
+import com.mpraski.jmonitor.util.InstrumentUtil;
 
 public final class FieldWriteGenerator extends InsteadActionGenerator {
 
@@ -81,7 +83,7 @@ public final class FieldWriteGenerator extends InsteadActionGenerator {
 			if (isReference(fieldType))
 				methodVisitor.visitTypeInsn(CHECKCAST, fieldType.getInternalName());
 			else
-				unbox(methodVisitor, fieldType);
+				InstrumentUtil.unbox(methodVisitor, fieldType);
 
 			methodVisitor.visitMethodInsn(INVOKESTATIC, outerClass, accessorName, accessorDesc, false);
 			Label l1 = new Label();

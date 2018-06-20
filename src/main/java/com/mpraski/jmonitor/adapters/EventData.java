@@ -6,6 +6,7 @@ import com.mpraski.jmonitor.EventOrder;
 import com.mpraski.jmonitor.EventType;
 
 public final class EventData {
+
 	public EventData(EventType type, String tag, String monitor, EventOrder order) {
 		this.type = type;
 		this.tag = tag;
@@ -84,7 +85,7 @@ public final class EventData {
 
 	@Override
 	public String toString() {
-		final StringBuilder builder = new StringBuilder();
+		StringBuilder builder = new StringBuilder();
 
 		builder.append("Type: ");
 		builder.append(type);

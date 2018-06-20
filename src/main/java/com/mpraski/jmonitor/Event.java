@@ -93,7 +93,7 @@ public final class Event {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
+		StringBuilder sb = new StringBuilder();
 
 		sb.append("Tag: ");
 		sb.append(tag);
@@ -116,11 +116,6 @@ public final class Event {
 			}
 
 		sb.append(']');
-
-		if (action != null) {
-			sb.append(", Action: ");
-			sb.append(action);
-		}
 
 		return sb.toString();
 	}

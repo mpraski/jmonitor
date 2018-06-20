@@ -1,7 +1,7 @@
 package com.mpraski.jmonitor.instead;
 
-import static com.mpraski.jmonitor.util.Operations.isReference;
-import static com.mpraski.jmonitor.util.Operations.takesTwoWords;
+import static com.mpraski.jmonitor.util.TypeUtil.isReference;
+import static com.mpraski.jmonitor.util.TypeUtil.takesTwoWords;
 
 import java.util.List;
 
@@ -11,6 +11,8 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
+
+import com.mpraski.jmonitor.util.InstrumentUtil;
 
 public final class NewInstanceGenerator extends InsteadActionGenerator {
 
@@ -81,13 +83,13 @@ public final class NewInstanceGenerator extends InsteadActionGenerator {
 				maxStack += takesTwoWords(type) ? 2 : 1;
 
 				methodVisitor.visitVarInsn(ALOAD, 1);
-				pushInt(methodVisitor, i);
+				InstrumentUtil.pushInt(methodVisitor, i);
 				methodVisitor.visitInsn(AALOAD);
 
 				if (isReference(type))
 					methodVisitor.visitTypeInsn(CHECKCAST, type.getInternalName());
 				else
-					unbox(methodVisitor, type);
+					InstrumentUtil.unbox(methodVisitor, type);
 			}
 
 			methodVisitor.visitMethodInsn(INVOKESPECIAL, instanceClass, "<init>", instanceConstructor, false);

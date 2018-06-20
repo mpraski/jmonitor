@@ -1,6 +1,6 @@
 package com.mpraski.jmonitor.adapters;
 
-import static com.mpraski.jmonitor.util.Operations.toDots;
+import static com.mpraski.jmonitor.util.TypeUtil.toDots;
 
 import java.util.List;
 import java.util.Map;

@@ -1,12 +1,13 @@
 package com.mpraski.jmonitor.adapters;
 
 public final class LocalVariable {
+
+	private final int index, loadInsn;
+
 	public LocalVariable(int index, int loadInsn) {
 		this.index = index;
 		this.loadInsn = loadInsn;
 	}
-
-	private final int index, loadInsn;
 
 	public int getIndex() {
 		return index;

@@ -18,11 +18,12 @@ import static com.mpraski.jmonitor.util.Constants.typeOfDouble;
 import static com.mpraski.jmonitor.util.Constants.typeOfFloat;
 import static com.mpraski.jmonitor.util.Constants.typeOfInteger;
 import static com.mpraski.jmonitor.util.Constants.typeOfLong;
-import static com.mpraski.jmonitor.util.Operations.eventOrder;
-import static com.mpraski.jmonitor.util.Operations.getLoadStoreInsns;
-import static com.mpraski.jmonitor.util.Operations.getPrimitiveClass;
-import static com.mpraski.jmonitor.util.Operations.isReference;
-import static com.mpraski.jmonitor.util.Operations.takesTwoWords;
+import static com.mpraski.jmonitor.util.EventUtil.eventOrder;
+import static com.mpraski.jmonitor.util.EventUtil.eventType;
+import static com.mpraski.jmonitor.util.TypeUtil.getLoadStoreInsns;
+import static com.mpraski.jmonitor.util.TypeUtil.getPrimitiveClass;
+import static com.mpraski.jmonitor.util.TypeUtil.isReference;
+import static com.mpraski.jmonitor.util.TypeUtil.takesTwoWords;
 
 import java.util.Arrays;
 import java.util.List;
@@ -39,8 +40,8 @@ import com.mpraski.jmonitor.instead.FieldReadGenerator;
 import com.mpraski.jmonitor.instead.FieldWriteGenerator;
 import com.mpraski.jmonitor.instead.InsteadActionGenerator;
 import com.mpraski.jmonitor.instead.MethodCallGenerator;
-import com.mpraski.jmonitor.util.Operations;
 import com.mpraski.jmonitor.util.Pair;
+import com.mpraski.jmonitor.util.TypeUtil;
 
 public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 
@@ -349,7 +350,7 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 		else
 			super.visitLdcInsn(e.getTag());
 
-		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/EventType", Operations.eventType(e.getType()),
+		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/EventType", eventType(e.getType()),
 				"Lcom/mpraski/jmonitor/EventType;");
 
 		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/EventOrder", eventOrder(e.getOrder()),
@@ -378,7 +379,7 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 
 		super.visitInsn(SWAP);
 
-		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/EventType", Operations.eventType(e.getType()),
+		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/EventType", eventType(e.getType()),
 				"Lcom/mpraski/jmonitor/EventType;");
 
 		super.visitInsn(SWAP);
@@ -450,7 +451,7 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 		super.visitTypeInsn(NEW, action.getName());
 		super.visitInsn(DUP);
 		super.visitIntInsn(ALOAD, 0);
-		super.visitMethodInsn(INVOKESPECIAL, action.getName(), "<init>", Operations.constructorOf(ownerType), false);
+		super.visitMethodInsn(INVOKESPECIAL, action.getName(), "<init>", TypeUtil.constructorOf(ownerType), false);
 	}
 
 	public Object getTop() {

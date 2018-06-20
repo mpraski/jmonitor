@@ -7,6 +7,8 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
+import com.mpraski.jmonitor.util.InstrumentUtil;
+
 public final class FieldReadGenerator extends InsteadActionGenerator {
 
 	private final String accessorName;
@@ -70,7 +72,7 @@ public final class FieldReadGenerator extends InsteadActionGenerator {
 			methodVisitor.visitVarInsn(ALOAD, 0);
 			methodVisitor.visitFieldInsn(GETFIELD, name, this0, outerDesc);
 			methodVisitor.visitMethodInsn(INVOKESTATIC, outerClass, accessorName, accessorDesc, false);
-			box(methodVisitor, fieldDesc);
+			InstrumentUtil.box(methodVisitor, fieldDesc);
 			methodVisitor.visitInsn(ARETURN);
 			Label l1 = new Label();
 			methodVisitor.visitLabel(l1);
@@ -97,7 +99,7 @@ public final class FieldReadGenerator extends InsteadActionGenerator {
 		methodVisitor.visitCode();
 		methodVisitor.visitVarInsn(ALOAD, 0);
 		methodVisitor.visitFieldInsn(GETFIELD, outerClass, fieldName, fieldDesc);
-		methodVisitor.visitInsn(getReturnInsn(fieldDesc));
+		methodVisitor.visitInsn(InstrumentUtil.getReturnInsn(fieldDesc));
 		methodVisitor.visitMaxs(2, 1);
 		methodVisitor.visitEnd();
 	}
