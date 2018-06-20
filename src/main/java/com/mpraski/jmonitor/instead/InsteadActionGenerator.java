@@ -26,8 +26,12 @@ import com.mpraski.jmonitor.util.Pair;
  * 4. New instance/array - constructor called with args, or args[0] - array size, rest - contents. Returns created instance.
  */
 public abstract class InsteadActionGenerator implements Opcodes {
+	protected final boolean onInstance;
 	protected final String outerClass, methodName, methodDesc, name, simpleName, internalName;
+
 	protected final static String[] insteadInterface = new String[] { "com/mpraski/jmonitor/InsteadAction" };
+
+	protected String instanceName;
 
 	public InsteadActionGenerator(String innerClass, String outerClass, String methodName, String methodDesc) {
 		this.outerClass = outerClass;
@@ -37,6 +41,20 @@ public abstract class InsteadActionGenerator implements Opcodes {
 		String[] parts = name.split(Pattern.quote("/"));
 		this.simpleName = parts[parts.length - 1];
 		this.internalName = name.replace('/', '.');
+		this.onInstance = false;
+	}
+
+	public InsteadActionGenerator(String innerClass, String outerClass, String methodName, String methodDesc,
+			String instanceName) {
+		this.outerClass = outerClass;
+		this.methodName = methodName;
+		this.methodDesc = methodDesc;
+		this.name = outerClass + "$" + innerClass;
+		String[] parts = name.split(Pattern.quote("/"));
+		this.simpleName = parts[parts.length - 1];
+		this.internalName = name.replace('/', '.');
+		this.instanceName = instanceName;
+		this.onInstance = true;
 	}
 
 	public String getInternalName() {

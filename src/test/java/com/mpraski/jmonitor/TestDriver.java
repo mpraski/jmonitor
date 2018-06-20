@@ -16,7 +16,7 @@ public class TestDriver {
 
 		Thread.currentThread().setContextClassLoader(cl);
 
-		Class loaded = null;
+		Class<?> loaded = null;
 		try {
 			loaded = cl.loadClass("com.mpraski.dummy.Dummy");
 		} catch (ClassNotFoundException e1) {

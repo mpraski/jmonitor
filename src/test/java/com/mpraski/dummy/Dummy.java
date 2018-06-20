@@ -1,5 +1,7 @@
 package com.mpraski.dummy;
 
+import java.math.BigInteger;
+
 import com.mpraski.jmonitor.InsteadAction;
 
 public class Dummy {
@@ -94,8 +96,7 @@ public class Dummy {
 
 			@Override
 			public Object doAction(Object[] arguments) {
-				return someMethod((double) arguments[0], (boolean) arguments[1], (String) arguments[2],
-						(int) arguments[3]);
+				return new BigInteger((String) arguments[0]);
 			}
 
 		};

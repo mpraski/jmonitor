@@ -17,6 +17,7 @@ public final class Constants implements Opcodes {
 
 	public static final Type typeOfEvent = Type.getType(Event.class);
 	public static final Type typeOfArray = Type.getType(Object[].class);
+	public static final Type typeOfObject = Type.getType(Object.class);
 	public static final Type typeOfInteger = Type.getType(Integer.class);
 	public static final Type typeOfFloat = Type.getType(Float.class);
 	public static final Type typeOfLong = Type.getType(Long.class);

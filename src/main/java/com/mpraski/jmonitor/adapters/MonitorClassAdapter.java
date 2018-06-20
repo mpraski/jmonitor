@@ -85,7 +85,7 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 	@Override
 	public void visitEnd() {
 		for (InsteadActionGenerator g : actionGenerators) {
-			cv.visitInnerClass(g.getName(), g.getOuterName(), g.getSimpleName(), 0);
+			cv.visitInnerClass(g.getName(), g.getOuterName(), g.getSimpleName(), ACC_SUPER);
 
 			if (g.modifiesOuterClass())
 				g.modifyOuterClass(cv);

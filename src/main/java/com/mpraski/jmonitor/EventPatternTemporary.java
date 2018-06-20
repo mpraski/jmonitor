@@ -127,11 +127,11 @@ public final class EventPatternTemporary implements Cloneable {
 		builder.append("Type: ");
 		builder.append(type);
 		builder.append(", inPattern: ");
-		builder.append(Objects.toString(inPattern, "null"));
+		builder.append(inPattern);
 		builder.append(", fromPattern: ");
-		builder.append(Objects.toString(fromPattern, "null"));
+		builder.append(fromPattern);
 		builder.append(", ofPattern: ");
-		builder.append(Objects.toString(ofPattern, "null"));
+		builder.append(ofPattern);
 
 		builder.append(System.lineSeparator());
 		builder.append("-------------------------");

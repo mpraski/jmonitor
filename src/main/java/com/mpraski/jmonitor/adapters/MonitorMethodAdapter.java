@@ -698,19 +698,13 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		Type ownerType = Type.getObjectType(thisOwner);
 		Type retType = e.getRetType();
 		String nextInnerClass = adapter.getNextInnerClass();
+		
 		String[] parts = e.getName().split(Pattern.quote("."));
 		String methodName = parts[parts.length - 1];
 
-		System.out.println(stack);
-
 		Pair<Integer, List<Type>> arrayAndTypes = captureArgumentsArray(e.getNumArgs());
 
-		System.out.println(stack);
-
 		super.visitInsn(POP);
-
-		System.out.println(stack);
-		System.out.println(thisDesc);
 
 		InsteadActionGenerator action = new MethodCallGenerator(nextInnerClass, thisOwner, originalName, thisDesc,
 				methodName, e.getDesc(), arrayAndTypes.getValue());
@@ -718,21 +712,14 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		adapter.addActionGenerator(action);
 
 		newInsteadAction(action, ownerType);
-		System.out.println(stack);
 		visitEventStartWithSwap(e);
-		System.out.println(stack);
 		super.visitVarInsn(ALOAD, arrayAndTypes.getKey());
-		System.out.println(stack);
 		visitEventEndWithAction(e);
-
-		System.out.println(stack);
 
 		if (isReference(retType))
 			super.visitTypeInsn(CHECKCAST, retType.getInternalName());
 		else
 			unbox(retType);
-
-		System.out.println(stack);
 
 		shouldPreserveOriginal = false;
 	}
@@ -795,7 +782,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	private Pair<Integer, List<Type>> captureArgumentsArray(int numArgs) {
-		List<Type> types = Arrays.asList(new Type[numArgs]);
+		Type[] types = new Type[numArgs];
 
 		pushInt(numArgs);
 		super.visitTypeInsn(ANEWARRAY, "java/lang/Object");
@@ -808,7 +795,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 		for (int i = numArgs - 1; i >= 0; i--) {
 			topType = getTopType();
 
-			types.set(i, topType);
+			types[i] = topType;
 
 			super.visitVarInsn(ALOAD, methodArgs);
 
@@ -828,7 +815,7 @@ public class MonitorMethodAdapter extends AnalyzerAdapter implements Opcodes {
 			super.visitInsn(AASTORE);
 		}
 
-		return new Pair<>(methodArgs, types);
+		return new Pair<>(methodArgs, Arrays.asList(types));
 	}
 
 	/*

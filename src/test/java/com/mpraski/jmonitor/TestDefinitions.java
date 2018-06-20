@@ -41,7 +41,7 @@ public class TestDefinitions implements EventPatternDefinitions {
 		EventPattern p21 = EventPattern.onMethodCall().of("(.*)someMethod2")
 				.doInstead("com.mpraski.dummy.DummyMonitor10");
 
-		return Arrays.asList(/* p3, p6, p8, p10, p12, p13, p14, p15, p16, p17, p19, p20, */ p21);
+		return Arrays.asList(p3, p6, p8, p10, p12, p13, p14, p15, p16, p17, p19, p20, p21);
 	}
 
 }
