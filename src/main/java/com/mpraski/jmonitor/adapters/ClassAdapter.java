@@ -14,7 +14,7 @@ import com.mpraski.jmonitor.EventPatternMatcher;
 import com.mpraski.jmonitor.EventType;
 import com.mpraski.jmonitor.instead.InsteadActionGenerator;
 
-public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
+public class ClassAdapter extends ClassVisitor implements Opcodes {
 
 	private final List<EventPatternMatcher> matchers;
 	private final List<EventData> eventsBefore, eventsAfter, eventsInstead;
@@ -28,7 +28,7 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 	private int accessorIndex;
 	private int innerClassIndex;
 
-	public MonitorClassAdapter(ClassVisitor classVisitor, List<EventPatternMatcher> matchers,
+	public ClassAdapter(ClassVisitor classVisitor, List<EventPatternMatcher> matchers,
 			Map<EventType, List<EventPatternMatcher>> mapped) {
 		super(ASM5, classVisitor);
 
@@ -75,8 +75,12 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 
 		if (mv != null) {
 			LocalVariablesSorter sorter = new LocalVariablesSorter(access, desc, mv);
-			mv = new MonitorMethodAdapter(owner, access, name, desc, source, this, sorter, matchers, mapped,
-					matchesFrom, eventsBefore, eventsAfter, eventsInstead);
+
+			InstrumentationAdapter instrument = new InstrumentationAdapter(owner, access, name, desc, source, this,
+					sorter);
+
+			mv = new MethodAdapter(name, desc, source, owner, instrument, matchers, mapped, matchesFrom, eventsBefore,
+					eventsAfter, eventsInstead);
 		}
 
 		return mv;
@@ -84,11 +88,11 @@ public class MonitorClassAdapter extends ClassVisitor implements Opcodes {
 
 	@Override
 	public void visitEnd() {
-		for (InsteadActionGenerator g : actionGenerators) {
-			cv.visitInnerClass(g.getName(), g.getOuterName(), g.getSimpleName(), ACC_SUPER);
+		for (InsteadActionGenerator action : actionGenerators) {
+			cv.visitInnerClass(action.getName(), action.getOuterName(), action.getSimpleName(), ACC_SUPER);
 
-			if (g.modifiesOuterClass())
-				g.modifyOuterClass(cv);
+			if (action.modifiesOuterClass())
+				action.modifyOuterClass(cv);
 		}
 
 		cv.visitEnd();

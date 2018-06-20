@@ -16,7 +16,7 @@ import com.mpraski.jmonitor.EventPatternDefinitions;
 import com.mpraski.jmonitor.EventPatternMatcher;
 import com.mpraski.jmonitor.EventType;
 import com.mpraski.jmonitor.ResolverGenerator;
-import com.mpraski.jmonitor.adapters.MonitorClassAdapter;
+import com.mpraski.jmonitor.adapters.ClassAdapter;
 import com.mpraski.jmonitor.instead.InsteadActionGenerator;
 
 public final class MonitorClassLoader extends ClassLoader {
@@ -119,7 +119,7 @@ public final class MonitorClassLoader extends ClassLoader {
 
 				ClassReader cr = new ClassReader(classBytes);
 				ClassWriter cw = new ClassWriter(cr, 0);
-				MonitorClassAdapter adapter = new MonitorClassAdapter(cw, matchers, mapped);
+				ClassAdapter adapter = new ClassAdapter(cw, matchers, mapped);
 				cr.accept(adapter, ClassReader.EXPAND_FRAMES);
 
 				clazz = defineClass(name, cw.toByteArray());

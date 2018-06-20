@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.AnalyzerAdapter;
@@ -40,16 +39,16 @@ import com.mpraski.jmonitor.instead.FieldReadGenerator;
 import com.mpraski.jmonitor.instead.FieldWriteGenerator;
 import com.mpraski.jmonitor.instead.InsteadActionGenerator;
 import com.mpraski.jmonitor.instead.MethodCallGenerator;
-import com.mpraski.jmonitor.util.Pair;
 import com.mpraski.jmonitor.util.Operations;
+import com.mpraski.jmonitor.util.Pair;
 
-public class OperationsMethodAdapter extends AnalyzerAdapter implements Opcodes {
+public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 
 	/*
 	 * Instance of enclosing MonitorClassAdapter, used to get indices of next inner
 	 * class / accessor method.
 	 */
-	private final MonitorClassAdapter adapter;
+	private final ClassAdapter adapter;
 
 	/*
 	 * Used to add local variables in cases where certain values (e.g. method
@@ -57,6 +56,9 @@ public class OperationsMethodAdapter extends AnalyzerAdapter implements Opcodes 
 	 */
 	private final LocalVariablesSorter sorter;
 
+	/*
+	 * Characteristics of instrumented method
+	 */
 	private final String name;
 	private final String desc;
 	private final String owner;
@@ -64,7 +66,7 @@ public class OperationsMethodAdapter extends AnalyzerAdapter implements Opcodes 
 
 	/*
 	 * Temporaries signaling presence of certain scenarios (e.g. capture local
-	 * variable for sending evnet after field write)
+	 * variable for sending event after field write)
 	 */
 	private boolean shouldGenerateLocal;
 	private boolean shouldGenerateDup;
@@ -72,10 +74,13 @@ public class OperationsMethodAdapter extends AnalyzerAdapter implements Opcodes 
 	private boolean shouldPreserveOriginal = true;
 
 	private int line;
+	private int generatedLocal;
+	private int generatedArgsArray;
+	private int currentNumArgs;
 
-	public OperationsMethodAdapter(String owner, int access, String name, String descriptor, String source,
-			MonitorClassAdapter adapter, LocalVariablesSorter sorter) {
-		super(owner, access, name, descriptor, sorter);
+	public InstrumentationAdapter(String owner, int access, String name, String descriptor, String source,
+			ClassAdapter adapter, LocalVariablesSorter sorter) {
+		super(ASM5, owner, access, name, descriptor, sorter);
 
 		this.adapter = adapter;
 		this.sorter = sorter;
@@ -107,26 +112,39 @@ public class OperationsMethodAdapter extends AnalyzerAdapter implements Opcodes 
 		return shouldPreserveOriginal;
 	}
 
+	public void generateLocal() {
+		generatedLocal = captureLocal();
+	}
+
+	public void generatedArgsArray() {
+		LocalVariable[] vars = captureMethodArguments(currentNumArgs);
+		restoreMethodArguments(currentNumArgs, vars);
+		generatedArgsArray = vars[vars.length - 1].getIndex();
+	}
+
+	public void setShouldGenerateLocal(boolean shouldGenerateLocal) {
+		this.shouldGenerateLocal = shouldGenerateLocal;
+	}
+
+	public void setShouldGenerateDup(boolean shouldGenerateDup) {
+		this.shouldGenerateDup = shouldGenerateDup;
+	}
+
+	public void setShouldGenerateArgsArray(boolean shouldGenerateArgsArray) {
+		this.shouldGenerateArgsArray = shouldGenerateArgsArray;
+	}
+
+	public void setShouldPreserveOriginal(boolean shouldPreserveOriginal) {
+		this.shouldPreserveOriginal = shouldPreserveOriginal;
+	}
+
+	public void setNumArgs(int args) {
+		this.currentNumArgs = args;
+	}
+
 	public void reset() {
 		shouldGenerateLocal = shouldGenerateDup = shouldGenerateArgsArray = false;
 		shouldPreserveOriginal = true;
-	}
-
-	/*
-	 * Creates a local variable holding boxed value on the top of the stack.
-	 */
-	public int captureLocal() {
-		Type topType = getTopType();
-
-		if (takesTwoWords(topType))
-			super.visitInsn(DUP2);
-		else
-			super.visitInsn(DUP);
-
-		int l = sorter.newLocal(box(topType));
-		super.visitVarInsn(ASTORE, l);
-
-		return l;
 	}
 
 	public void visitFieldRead(EventData e) {
@@ -138,7 +156,7 @@ public class OperationsMethodAdapter extends AnalyzerAdapter implements Opcodes 
 		visitEventEnd(e);
 	}
 
-	public void visitFieldWrite(EventData e, int generatedLocal) {
+	public void visitFieldWrite(EventData e) {
 		visitEventStart(e);
 		super.visitVarInsn(ALOAD, 0);
 		super.visitFieldInsn(GETFIELD, e.getOwner(), e.getName(), e.getDesc());
@@ -154,7 +172,7 @@ public class OperationsMethodAdapter extends AnalyzerAdapter implements Opcodes 
 		visitEventEnd(e);
 	}
 
-	public void visitStaticFieldWrite(EventData e, int generatedLocal) {
+	public void visitStaticFieldWrite(EventData e) {
 		visitEventStart(e);
 		super.visitFieldInsn(GETSTATIC, e.getOwner(), e.getName(), e.getDesc());
 		box(e.getDesc());
@@ -227,7 +245,7 @@ public class OperationsMethodAdapter extends AnalyzerAdapter implements Opcodes 
 		super.visitTypeInsn(CHECKCAST, oldType.getInternalName());
 	}
 
-	public void visitMethodCallAfter(EventData e, int generatedArgsArray) {
+	public void visitMethodCallAfter(EventData e) {
 		visitEventStart(e);
 		super.visitLdcInsn(e.getName());
 		super.visitVarInsn(ALOAD, generatedArgsArray);
@@ -318,108 +336,6 @@ public class OperationsMethodAdapter extends AnalyzerAdapter implements Opcodes 
 			unbox(retType);
 
 		shouldPreserveOriginal = false;
-	}
-
-	/*
-	 * Builds an array of indices of local variables added to preserve the arguments
-	 * of instrumented method in between the event generation. Also, the last entry
-	 * contains the index of an array of boxed arguments ready to be passed to an
-	 * event.
-	 */
-	public LocalVariable[] captureMethodArguments(int numArgs) {
-		LocalVariable[] localsVars = new LocalVariable[numArgs + 1];
-
-		pushInt(numArgs);
-		super.visitTypeInsn(ANEWARRAY, "java/lang/Object");
-
-		int methodArgs = sorter.newLocal(typeOfArray);
-		super.visitVarInsn(ASTORE, methodArgs);
-
-		Type topType;
-		boolean twoWords;
-
-		for (int i = numArgs - 1; i >= 0; i--) {
-			topType = getTopType();
-			twoWords = takesTwoWords(topType);
-
-			if (twoWords)
-				super.visitInsn(DUP2);
-			else
-				super.visitInsn(DUP);
-
-			Pair<Integer, Integer> insns = getLoadStoreInsns(topType);
-
-			int l = sorter.newLocal(topType);
-			super.visitVarInsn(insns.getKey(), l);
-
-			localsVars[i] = new LocalVariable(l, insns.getValue());
-
-			super.visitVarInsn(ALOAD, methodArgs);
-
-			if (twoWords) {
-				super.visitInsn(DUP_X2);
-				super.visitInsn(POP);
-			} else {
-				super.visitInsn(SWAP);
-			}
-
-			if (!insns.equals(INSNS_REF))
-				boxWithoutDup(topType);
-
-			pushInt(i);
-
-			super.visitInsn(SWAP);
-			super.visitInsn(AASTORE);
-		}
-
-		localsVars[numArgs] = new LocalVariable(methodArgs, 0);
-
-		return localsVars;
-	}
-
-	public Pair<Integer, List<Type>> captureArgumentsArray(int numArgs) {
-		Type[] types = new Type[numArgs];
-
-		pushInt(numArgs);
-		super.visitTypeInsn(ANEWARRAY, "java/lang/Object");
-
-		int methodArgs = sorter.newLocal(typeOfArray);
-		super.visitVarInsn(ASTORE, methodArgs);
-
-		Type topType;
-
-		for (int i = numArgs - 1; i >= 0; i--) {
-			topType = getTopType();
-
-			types[i] = topType;
-
-			super.visitVarInsn(ALOAD, methodArgs);
-
-			if (takesTwoWords(topType)) {
-				super.visitInsn(DUP_X2);
-				super.visitInsn(POP);
-			} else {
-				super.visitInsn(SWAP);
-			}
-
-			if (!isReference(topType))
-				boxWithoutDup(topType);
-
-			pushInt(i);
-
-			super.visitInsn(SWAP);
-			super.visitInsn(AASTORE);
-		}
-
-		return new Pair<>(methodArgs, Arrays.asList(types));
-	}
-
-	/*
-	 * Pushes the values of captured method arguments back onto the stack.
-	 */
-	public void restoreMethodArguments(int numArgs, LocalVariable[] localVars) {
-		for (int i = 0; i < numArgs; i++)
-			super.visitVarInsn(localVars[i].getLoadInsn(), localVars[i].getIndex());
 	}
 
 	public void visitEventStart(EventData e) {
@@ -544,7 +460,126 @@ public class OperationsMethodAdapter extends AnalyzerAdapter implements Opcodes 
 		return stack.get(stack.size() - 1);
 	}
 
-	public void pushInt(int i) {
+	/*
+	 * Creates a local variable holding boxed value on the top of the stack.
+	 */
+	private int captureLocal() {
+		Type topType = getTopType();
+
+		if (takesTwoWords(topType))
+			super.visitInsn(DUP2);
+		else
+			super.visitInsn(DUP);
+
+		int l = sorter.newLocal(box(topType));
+		super.visitVarInsn(ASTORE, l);
+
+		return l;
+	}
+
+	/*
+	 * Builds an array of indices of local variables added to preserve the arguments
+	 * of instrumented method in between the event generation. Also, the last entry
+	 * contains the index of an array of boxed arguments ready to be passed to an
+	 * event.
+	 */
+	private LocalVariable[] captureMethodArguments(int numArgs) {
+		LocalVariable[] localsVars = new LocalVariable[numArgs + 1];
+
+		pushInt(numArgs);
+		super.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+
+		int methodArgs = sorter.newLocal(typeOfArray);
+		super.visitVarInsn(ASTORE, methodArgs);
+
+		Type topType;
+		boolean twoWords;
+
+		for (int i = numArgs - 1; i >= 0; i--) {
+			topType = getTopType();
+			twoWords = takesTwoWords(topType);
+
+			if (twoWords)
+				super.visitInsn(DUP2);
+			else
+				super.visitInsn(DUP);
+
+			Pair<Integer, Integer> insns = getLoadStoreInsns(topType);
+
+			int l = sorter.newLocal(topType);
+			super.visitVarInsn(insns.getKey(), l);
+
+			localsVars[i] = new LocalVariable(l, insns.getValue());
+
+			super.visitVarInsn(ALOAD, methodArgs);
+
+			if (twoWords) {
+				super.visitInsn(DUP_X2);
+				super.visitInsn(POP);
+			} else {
+				super.visitInsn(SWAP);
+			}
+
+			if (!insns.equals(INSNS_REF))
+				boxWithoutDup(topType);
+
+			pushInt(i);
+
+			super.visitInsn(SWAP);
+			super.visitInsn(AASTORE);
+		}
+
+		localsVars[numArgs] = new LocalVariable(methodArgs, 0);
+
+		return localsVars;
+	}
+
+	private Pair<Integer, List<Type>> captureArgumentsArray(int numArgs) {
+		Type[] types = new Type[numArgs];
+
+		pushInt(numArgs);
+		super.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+
+		int methodArgs = sorter.newLocal(typeOfArray);
+		super.visitVarInsn(ASTORE, methodArgs);
+
+		Type topType;
+
+		for (int i = numArgs - 1; i >= 0; i--) {
+			topType = getTopType();
+
+			types[i] = topType;
+
+			super.visitVarInsn(ALOAD, methodArgs);
+
+			if (takesTwoWords(topType)) {
+				super.visitInsn(DUP_X2);
+				super.visitInsn(POP);
+			} else {
+				super.visitInsn(SWAP);
+			}
+
+			if (!isReference(topType))
+				boxWithoutDup(topType);
+
+			pushInt(i);
+
+			super.visitInsn(SWAP);
+			super.visitInsn(AASTORE);
+		}
+
+		return new Pair<>(methodArgs, Arrays.asList(types));
+	}
+
+	/*
+	 * Pushes the values of captured method arguments back onto the stack.
+	 */
+	private void restoreMethodArguments(int numArgs, LocalVariable[] localVars) {
+		for (int i = 0; i < numArgs; i++)
+			super.visitVarInsn(localVars[i].getLoadInsn(), localVars[i].getIndex());
+	}
+
+	private void pushInt(int i) {
 		if (i < 6) {
 			switch (i) {
 			case 0:
@@ -579,7 +614,7 @@ public class OperationsMethodAdapter extends AnalyzerAdapter implements Opcodes 
 	 * Returns the type of value on the top of the stack. Aware of long/double types
 	 * taking two words.
 	 */
-	public Type getTopType() {
+	private Type getTopType() {
 		Object v2 = getTop();
 
 		if (v2 instanceof String)
@@ -612,7 +647,7 @@ public class OperationsMethodAdapter extends AnalyzerAdapter implements Opcodes 
 	 * Attempts to produce a boxed value from descriptor of type of the value on top
 	 * of the stack.
 	 */
-	public void box(String desc) {
+	private void box(String desc) {
 		if (desc.length() > 1)
 			return;
 
@@ -624,7 +659,7 @@ public class OperationsMethodAdapter extends AnalyzerAdapter implements Opcodes 
 	/*
 	 * Pushes a boxed value of the top of the stack.
 	 */
-	public Type box(Type type) {
+	private Type box(Type type) {
 		if (type.equals(Type.LONG_TYPE)) {
 			super.visitInsn(DUP2);
 			super.visitMethodInsn(INVOKESTATIC, CLASS_LONG.getKey(), "valueOf", CLASS_LONG.getValue(), false);
@@ -650,7 +685,7 @@ public class OperationsMethodAdapter extends AnalyzerAdapter implements Opcodes 
 	 * Pushes a boxed value of the top of the stack. Does not duplicate the raw
 	 * value.
 	 */
-	public Type boxWithoutDup(Type type) {
+	private Type boxWithoutDup(Type type) {
 		if (type.equals(Type.LONG_TYPE)) {
 			super.visitMethodInsn(INVOKESTATIC, CLASS_LONG.getKey(), "valueOf", CLASS_LONG.getValue(), false);
 			return typeOfLong;
@@ -668,7 +703,7 @@ public class OperationsMethodAdapter extends AnalyzerAdapter implements Opcodes 
 		return type;
 	}
 
-	public void unbox(Type type) {
+	private void unbox(Type type) {
 		if (type.equals(Type.LONG_TYPE)) {
 			super.visitTypeInsn(CHECKCAST, CLASS_LONG.getKey());
 			super.visitMethodInsn(INVOKEVIRTUAL, CLASS_LONG.getKey(), "longValue", "()J", false);
@@ -683,5 +718,4 @@ public class OperationsMethodAdapter extends AnalyzerAdapter implements Opcodes 
 			super.visitMethodInsn(INVOKEVIRTUAL, CLASS_FLOAT.getKey(), "floatValue", "()F", false);
 		}
 	}
-
 }
