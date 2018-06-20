@@ -1,7 +1,7 @@
 package com.mpraski.jmonitor.instead;
 
-import static com.mpraski.jmonitor.util.Utils.getLoadStoreInsns;
-import static com.mpraski.jmonitor.util.Utils.isReference;
+import static com.mpraski.jmonitor.util.Operations.getLoadStoreInsns;
+import static com.mpraski.jmonitor.util.Operations.isReference;
 
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;

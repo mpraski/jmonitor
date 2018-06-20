@@ -1,7 +1,7 @@
 package com.mpraski.jmonitor.instead;
 
-import static com.mpraski.jmonitor.util.Utils.isReference;
-import static com.mpraski.jmonitor.util.Utils.takesTwoWords;
+import static com.mpraski.jmonitor.util.Operations.isReference;
+import static com.mpraski.jmonitor.util.Operations.takesTwoWords;
 
 import java.util.List;
 

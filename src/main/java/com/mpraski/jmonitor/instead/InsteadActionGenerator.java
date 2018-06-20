@@ -4,7 +4,7 @@ import static com.mpraski.jmonitor.util.Constants.CLASS_DOUBLE;
 import static com.mpraski.jmonitor.util.Constants.CLASS_FLOAT;
 import static com.mpraski.jmonitor.util.Constants.CLASS_INTEGER;
 import static com.mpraski.jmonitor.util.Constants.CLASS_LONG;
-import static com.mpraski.jmonitor.util.Utils.getPrimitiveClass;
+import static com.mpraski.jmonitor.util.Operations.getPrimitiveClass;
 
 import java.util.regex.Pattern;
 

@@ -19,7 +19,7 @@ import org.objectweb.asm.Type;
 import com.mpraski.jmonitor.EventOrder;
 import com.mpraski.jmonitor.EventType;
 
-public final class Utils {
+public final class Operations {
 
 	public static String constructorOf(Type type) {
 		return "(" + type.getDescriptor() + ")V";
