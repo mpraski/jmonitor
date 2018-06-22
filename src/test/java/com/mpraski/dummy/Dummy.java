@@ -29,7 +29,8 @@ public class Dummy {
 		}
 		System.out.println("writeJumbo " + d.writeJumbo());
 		d.readWop();
-		d.writeObject();
+		System.out.println("writeObject " + d.writeObject());
+		System.out.println("writeObject2 " + d.writeObject2());
 		d.doCall();
 		/*
 		 * InsteadAction ia = new InsteadAction() {
@@ -108,8 +109,12 @@ public class Dummy {
 		return jumbo;
 	}
 
-	public Object writeObject() {
-		return new Object();
+	public Integer writeObject() {
+		return new Integer(23);
+	}
+
+	public Integer writeObject2() {
+		return new Integer(23);
 	}
 
 	public Object someMethod(double a, boolean b, String c, int d) {

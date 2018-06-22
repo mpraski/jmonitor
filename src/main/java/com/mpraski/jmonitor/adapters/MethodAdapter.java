@@ -167,10 +167,12 @@ public class MethodAdapter extends MethodVisitor implements Opcodes {
 
 		switch (opcode) {
 		case INVOKESPECIAL:
-			if (name.equals("<init>"))
+			if (name.equals("<init>")) {
 				tryMatch(EventType.INSTANCE, methodOwner, EventOrder.AFTER);
-			else
+				tryMatch(EventType.INSTANCE, methodName, type);
+			} else {
 				tryMatch(EventType.METHOD_CALL, methodName, type);
+			}
 			break;
 		case INVOKESTATIC:
 		case INVOKEVIRTUAL:
@@ -404,6 +406,9 @@ public class MethodAdapter extends MethodVisitor implements Opcodes {
 			break;
 		case METHOD_CALL:
 			eventsInstead.forEach(instrument::visitMethodCallInstead);
+			break;
+		case INSTANCE:
+			eventsInstead.forEach(instrument::visitInstanceInstead);
 			break;
 		}
 	}

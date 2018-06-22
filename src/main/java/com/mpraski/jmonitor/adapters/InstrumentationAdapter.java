@@ -40,6 +40,7 @@ import com.mpraski.jmonitor.instead.FieldReadGenerator;
 import com.mpraski.jmonitor.instead.FieldWriteGenerator;
 import com.mpraski.jmonitor.instead.InsteadActionGenerator;
 import com.mpraski.jmonitor.instead.MethodCallGenerator;
+import com.mpraski.jmonitor.instead.NewInstanceGenerator;
 import com.mpraski.jmonitor.util.Pair;
 import com.mpraski.jmonitor.util.TypeUtil;
 
@@ -335,6 +336,30 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 			super.visitTypeInsn(CHECKCAST, retType.getInternalName());
 		else
 			unbox(retType);
+
+		shouldPreserveOriginal = false;
+	}
+
+	public void visitInstanceInstead(EventData e) {
+		Type ownerType = Type.getObjectType(owner);
+		Type retType = Type.getObjectType(e.getName());
+		String nextInnerClass = adapter.getNextInnerClass();
+
+		Pair<Integer, List<Type>> arrayAndTypes = captureArgumentsArray(e.getNumArgs());
+
+		super.visitInsn(POP2);
+
+		InsteadActionGenerator action = new NewInstanceGenerator(nextInnerClass, owner, name, desc,
+				retType.getInternalName(), e.getDesc(), arrayAndTypes.getValue());
+
+		adapter.addActionGenerator(action);
+
+		newInsteadAction(action, ownerType);
+		visitEventStartWithSwap(e);
+		super.visitVarInsn(ALOAD, arrayAndTypes.getKey());
+		visitEventEndWithAction(e);
+
+		super.visitTypeInsn(CHECKCAST, retType.getInternalName());
 
 		shouldPreserveOriginal = false;
 	}
