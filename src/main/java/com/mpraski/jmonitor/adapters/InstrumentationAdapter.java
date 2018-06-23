@@ -65,6 +65,7 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 	private final String desc;
 	private final String owner;
 	private final String source;
+	private final Type ownerType;
 
 	/*
 	 * Temporaries signaling presence of certain scenarios (e.g. capture local
@@ -90,6 +91,7 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 		this.desc = descriptor;
 		this.owner = owner;
 		this.source = source;
+		this.ownerType = Type.getObjectType(owner);
 	}
 
 	@Override
@@ -280,7 +282,6 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 
 	public void visitWriteInstead(EventData e) {
 		Type oldType = Type.getType(e.getDesc());
-		Type ownerType = Type.getObjectType(owner);
 		String nextInnerClass = adapter.getNextInnerClass();
 		String nextAccessor = adapter.getNextAccessor();
 
@@ -298,6 +299,7 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 		super.visitInsn(ICONST_0);
 		super.visitInsn(SWAP);
 		super.visitInsn(AASTORE);
+
 		int argsArray = captureLocal();
 
 		newInsteadAction(action, ownerType);
@@ -311,7 +313,6 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	public void visitMethodCallInstead(EventData e) {
-		Type ownerType = Type.getObjectType(owner);
 		Type retType = e.getRetType();
 		String nextInnerClass = adapter.getNextInnerClass();
 
@@ -341,8 +342,7 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	public void visitInstanceInstead(EventData e) {
-		Type ownerType = Type.getObjectType(owner);
-		Type retType = Type.getObjectType(e.getName());
+		Type retType = e.getRetType();
 		String nextInnerClass = adapter.getNextInnerClass();
 
 		Pair<Integer, List<Type>> arrayAndTypes = captureArgumentsArray(e.getNumArgs());

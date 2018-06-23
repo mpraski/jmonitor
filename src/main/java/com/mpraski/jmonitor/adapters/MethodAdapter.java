@@ -169,7 +169,7 @@ public class MethodAdapter extends MethodVisitor implements Opcodes {
 		case INVOKESPECIAL:
 			if (name.equals("<init>")) {
 				tryMatch(EventType.INSTANCE, methodOwner, EventOrder.AFTER);
-				tryMatch(EventType.INSTANCE, methodName, type);
+				tryMatch(EventType.INSTANCE, methodOwner, type, EventOrder.INSTEAD);
 			} else {
 				tryMatch(EventType.METHOD_CALL, methodName, type);
 			}
@@ -224,6 +224,14 @@ public class MethodAdapter extends MethodVisitor implements Opcodes {
 		for (EventPatternMatcher m : mapped.get(type))
 			if (matchesFrom.get(m) && m.matchesOf(of))
 				addMonitors(m, name, desc, owner);
+
+		currentType = type;
+	}
+
+	private void tryMatch(EventType type, String of, Type desc, EventOrder order) {
+		for (EventPatternMatcher m : mapped.get(type))
+			if (matchesFrom.get(m) && m.matchesOf(of))
+				addMonitors(m, order, of.replace('.', '/'), desc);
 
 		currentType = type;
 	}
@@ -299,6 +307,27 @@ public class MethodAdapter extends MethodVisitor implements Opcodes {
 				continue;
 
 			EventData d = new EventData(e.getType(), e.getTag(), m.getFieldName(), m.getOrder(), of);
+			switch (order) {
+			case BEFORE:
+				eventsBefore.add(d);
+				break;
+			case AFTER:
+				eventsAfter.add(d);
+				break;
+			case INSTEAD:
+				eventsInstead.add(d);
+				break;
+			}
+		}
+	}
+
+	private void addMonitors(EventPatternMatcher e, EventOrder order, String of, Type desc) {
+		for (EventMonitor m : e.getMonitors()) {
+			if (m.getOrder() != order)
+				continue;
+
+			EventData d = new EventData(e.getType(), e.getTag(), m.getFieldName(), m.getOrder(), of,
+					desc.getArgumentTypes().length, desc.getInternalName(), Type.getObjectType(of));
 			switch (order) {
 			case BEFORE:
 				eventsBefore.add(d);

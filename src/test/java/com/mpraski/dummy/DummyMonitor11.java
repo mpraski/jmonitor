@@ -9,7 +9,9 @@ public class DummyMonitor11 implements InsteadMonitor {
 	public Object doInstead(Event event) {
 		System.out.println("DummyMonitor11 :: " + event);
 
-		return event.passThrough();
+		event.getArguments()[0] = 42;
+
+		return event.passThrough(event.getArguments());
 	}
 
 }
