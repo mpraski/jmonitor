@@ -26,9 +26,17 @@ public class MethodAdapter extends MethodVisitor implements Opcodes {
 
 	private EventType currentType;
 
-	public MethodAdapter(String name, String desc, String source, String owner, InstrumentationAdapter instrument,
-			List<EventPatternMatcher> matchers, Map<EventType, List<EventPatternMatcher>> mapped,
-			Map<EventPatternMatcher, Boolean> matchesFrom, List<EventData> eventsBefore, List<EventData> eventsAfter,
+	public MethodAdapter(
+			String name,
+			String desc,
+			String source,
+			String owner,
+			InstrumentationAdapter instrument,
+			List<EventPatternMatcher> matchers,
+			Map<EventType, List<EventPatternMatcher>> mapped,
+			Map<EventPatternMatcher, Boolean> matchesFrom,
+			List<EventData> eventsBefore,
+			List<EventData> eventsAfter,
 			List<EventData> eventsInstead) {
 		super(ASM5, instrument);
 
@@ -326,8 +334,15 @@ public class MethodAdapter extends MethodVisitor implements Opcodes {
 			if (m.getOrder() != order)
 				continue;
 
-			EventData d = new EventData(e.getType(), e.getTag(), m.getFieldName(), m.getOrder(), of,
-					desc.getArgumentTypes().length, desc.getInternalName(), Type.getObjectType(of));
+			EventData d = new EventData(
+					e.getType(),
+					e.getTag(),
+					m.getFieldName(),
+					m.getOrder(),
+					of,
+					desc.getArgumentTypes().length,
+					desc.getInternalName(),
+					Type.getObjectType(of));
 			switch (order) {
 			case BEFORE:
 				eventsBefore.add(d);
@@ -348,7 +363,14 @@ public class MethodAdapter extends MethodVisitor implements Opcodes {
 		Type ret = methodType.getReturnType();
 
 		for (EventMonitor m : e.getMonitors()) {
-			EventData d = new EventData(e.getType(), e.getTag(), m.getFieldName(), m.getOrder(), of, numArgs, desc,
+			EventData d = new EventData(
+					e.getType(),
+					e.getTag(),
+					m.getFieldName(),
+					m.getOrder(),
+					of,
+					numArgs,
+					desc,
 					ret);
 			switch (m.getOrder()) {
 			case BEFORE:

@@ -20,8 +20,14 @@ public final class NewInstanceGenerator extends InsteadActionGenerator {
 	private final String instanceConstructor;
 	private final List<Type> argTypes;
 
-	public NewInstanceGenerator(String innerClass, String outerClass, String methodName, String methodDesc,
-			String instanceClass, String instanceConstructor, List<Type> argTypes) {
+	public NewInstanceGenerator(
+			String innerClass,
+			String outerClass,
+			String methodName,
+			String methodDesc,
+			String instanceClass,
+			String instanceConstructor,
+			List<Type> argTypes) {
 		super(innerClass, outerClass, methodName, methodDesc);
 		this.instanceClass = instanceClass;
 		this.instanceConstructor = instanceConstructor;
@@ -67,8 +73,8 @@ public final class NewInstanceGenerator extends InsteadActionGenerator {
 		}
 
 		{
-			methodVisitor = classWriter.visitMethod(ACC_PUBLIC, "doAction", "([Ljava/lang/Object;)Ljava/lang/Object;",
-					null, null);
+			methodVisitor = classWriter
+					.visitMethod(ACC_PUBLIC, "doAction", "([Ljava/lang/Object;)Ljava/lang/Object;", null, null);
 			methodVisitor.visitCode();
 
 			Label l0 = new Label();

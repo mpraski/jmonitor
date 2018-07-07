@@ -11,7 +11,8 @@ public class TestDriver {
 	}
 
 	public void run() {
-		MonitorClassLoader cl = new MonitorClassLoader(getClass().getClassLoader(),
+		MonitorClassLoader cl = new MonitorClassLoader(
+				getClass().getClassLoader(),
 				"com.mpraski.jmonitor.TestDefinitions");
 
 		Thread.currentThread().setContextClassLoader(cl);

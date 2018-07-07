@@ -1,8 +1,15 @@
 package com.mpraski.jmonitor;
 
 public final class Event {
-	public Event(String tag, EventType type, EventOrder order, String source, int lineNumber, Object target,
-			Object[] arguments, StackTraceElement[] callstack) {
+	public Event(
+			String tag,
+			EventType type,
+			EventOrder order,
+			String source,
+			int lineNumber,
+			Object target,
+			Object[] arguments,
+			StackTraceElement[] callstack) {
 		this.tag = tag;
 		this.type = type;
 		this.order = order;
@@ -13,8 +20,15 @@ public final class Event {
 		this.callstack = callstack;
 	}
 
-	public Event(String tag, EventType type, EventOrder order, String source, int lineNumber, InsteadAction action,
-			Object[] arguments, StackTraceElement[] callstack) {
+	public Event(
+			String tag,
+			EventType type,
+			EventOrder order,
+			String source,
+			int lineNumber,
+			InsteadAction action,
+			Object[] arguments,
+			StackTraceElement[] callstack) {
 		this.tag = tag;
 		this.type = type;
 		this.order = order;
@@ -46,16 +60,10 @@ public final class Event {
 	private InsteadAction action;
 
 	public Object passThrough() {
-		if (action == null)
-			throw new NullPointerException("Action is null");
-
 		return action.doAction(null);
 	}
 
 	public Object passThrough(Object[] arguments) {
-		if (action == null)
-			throw new NullPointerException("Action is null");
-
 		return action.doAction(arguments);
 	}
 

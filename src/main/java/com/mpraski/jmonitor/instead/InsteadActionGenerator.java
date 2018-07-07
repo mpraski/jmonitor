@@ -34,7 +34,11 @@ public abstract class InsteadActionGenerator implements Opcodes {
 		this.onInstance = false;
 	}
 
-	public InsteadActionGenerator(String innerClass, String outerClass, String methodName, String methodDesc,
+	public InsteadActionGenerator(
+			String innerClass,
+			String outerClass,
+			String methodName,
+			String methodDesc,
 			String instanceName) {
 		this.outerClass = outerClass;
 		this.methodName = methodName;

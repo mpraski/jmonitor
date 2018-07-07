@@ -147,10 +147,13 @@ public final class EventPatternCompiler {
 	}
 
 	private static void merge(List<EventPatternTemporary> result, final EventPattern p) {
-		result.replaceAll(m -> new EventPatternTemporary(m.getTag(), m.getType(),
-				p.getIn() != null ? mapOf(p.getIn()) : m.getInPattern(),
-				p.getFrom() != null ? mapOf(p.getFrom()) : m.getFromPattern(),
-				p.getOf() != null ? mapOf(p.getOf()) : m.getOfPattern()));
+		result.replaceAll(
+				m -> new EventPatternTemporary(
+						m.getTag(),
+						m.getType(),
+						p.getIn() != null ? mapOf(p.getIn()) : m.getInPattern(),
+						p.getFrom() != null ? mapOf(p.getFrom()) : m.getFromPattern(),
+						p.getOf() != null ? mapOf(p.getOf()) : m.getOfPattern()));
 	}
 
 	private static void negate(List<EventPatternTemporary> result) {

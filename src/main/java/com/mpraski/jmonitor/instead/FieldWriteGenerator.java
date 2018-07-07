@@ -20,8 +20,15 @@ public final class FieldWriteGenerator extends InsteadActionGenerator {
 	private final String fieldDesc;
 	private final Type fieldType;
 
-	public FieldWriteGenerator(String innerClass, String outerClass, String methodName, String methodDesc,
-			String accessorName, String accessorDesc, String fieldName, String fieldDesc) {
+	public FieldWriteGenerator(
+			String innerClass,
+			String outerClass,
+			String methodName,
+			String methodDesc,
+			String accessorName,
+			String accessorDesc,
+			String fieldName,
+			String fieldDesc) {
 		super(innerClass, outerClass, methodName, methodDesc);
 		this.accessorName = accessorName;
 		this.accessorDesc = accessorDesc;
@@ -69,8 +76,8 @@ public final class FieldWriteGenerator extends InsteadActionGenerator {
 		}
 
 		{
-			methodVisitor = classWriter.visitMethod(ACC_PUBLIC, "doAction", "([Ljava/lang/Object;)Ljava/lang/Object;",
-					null, null);
+			methodVisitor = classWriter
+					.visitMethod(ACC_PUBLIC, "doAction", "([Ljava/lang/Object;)Ljava/lang/Object;", null, null);
 			methodVisitor.visitCode();
 			Label l0 = new Label();
 			methodVisitor.visitLabel(l0);
@@ -110,8 +117,8 @@ public final class FieldWriteGenerator extends InsteadActionGenerator {
 
 	@Override
 	public void modifyOuterClass(ClassVisitor cv) {
-		MethodVisitor methodVisitor = cv.visitMethod(ACC_STATIC | ACC_SYNTHETIC, accessorName, accessorDesc, null,
-				null);
+		MethodVisitor methodVisitor = cv
+				.visitMethod(ACC_STATIC | ACC_SYNTHETIC, accessorName, accessorDesc, null, null);
 		methodVisitor.visitCode();
 		methodVisitor.visitVarInsn(ALOAD, 0);
 		methodVisitor.visitVarInsn(getLoadStoreInsns(fieldType).getValue(), 1);

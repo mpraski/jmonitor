@@ -55,8 +55,12 @@ public final class EventPatternTemporary implements Cloneable {
 		this.monitors = new HashSet<>();
 	}
 
-	public EventPatternTemporary(String tag, EventType type, Map<String, Boolean> inPattern,
-			Map<String, Boolean> fromPattern, Map<String, Boolean> ofPattern) {
+	public EventPatternTemporary(
+			String tag,
+			EventType type,
+			Map<String, Boolean> inPattern,
+			Map<String, Boolean> fromPattern,
+			Map<String, Boolean> ofPattern) {
 		this.tag = tag;
 		this.type = type;
 
@@ -122,7 +126,7 @@ public final class EventPatternTemporary implements Cloneable {
 
 	@Override
 	public String toString() {
-		final StringBuilder builder = new StringBuilder();
+		StringBuilder builder = new StringBuilder();
 
 		builder.append("Type: ");
 		builder.append(type);

@@ -24,7 +24,8 @@ public final class Constants implements Opcodes {
 	public static final Type typeOfDouble = Type.getType(Double.class);
 
 	public static final Pair<String, String> CLASS_BOOLEAN = new Pair<>("java/lang/Boolean", "(Z)Ljava/lang/Boolean;");
-	public static final Pair<String, String> CLASS_CHARACTER = new Pair<>("java/lang/Character",
+	public static final Pair<String, String> CLASS_CHARACTER = new Pair<>(
+			"java/lang/Character",
 			"(C)Ljava/lang/Character;");
 	public static final Pair<String, String> CLASS_BYTE = new Pair<>("java/lang/Byte", "(B)Ljava/lang/Byte;");
 	public static final Pair<String, String> ClASS_SHORT = new Pair<>("java/lang/Short", "(S)Ljava/lang/Short;");

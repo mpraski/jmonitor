@@ -22,6 +22,19 @@ public final class TypeUtil {
 		return "(" + type.getDescriptor() + ")V";
 	}
 
+	public static String methodOf(Type ret, Type... args) {
+		StringBuilder sb = new StringBuilder("(");
+
+		for (Type t : args) {
+			sb.append(t.getDescriptor());
+		}
+
+		sb.append(")");
+		sb.append(ret.getDescriptor());
+
+		return sb.toString();
+	}
+
 	public static boolean isReference(Type type) {
 		return type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY;
 	}

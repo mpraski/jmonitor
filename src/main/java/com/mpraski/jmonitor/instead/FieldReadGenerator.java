@@ -16,8 +16,15 @@ public final class FieldReadGenerator extends InsteadActionGenerator {
 	private final String fieldName;
 	private final String fieldDesc;
 
-	public FieldReadGenerator(String innerClass, String outerClass, String methodName, String methodDesc,
-			String accessorName, String accessorDesc, String fieldName, String fieldDesc) {
+	public FieldReadGenerator(
+			String innerClass,
+			String outerClass,
+			String methodName,
+			String methodDesc,
+			String accessorName,
+			String accessorDesc,
+			String fieldName,
+			String fieldDesc) {
 		super(innerClass, outerClass, methodName, methodDesc);
 		this.accessorName = accessorName;
 		this.accessorDesc = accessorDesc;
@@ -64,8 +71,8 @@ public final class FieldReadGenerator extends InsteadActionGenerator {
 		}
 
 		{
-			methodVisitor = classWriter.visitMethod(ACC_PUBLIC, "doAction", "([Ljava/lang/Object;)Ljava/lang/Object;",
-					null, null);
+			methodVisitor = classWriter
+					.visitMethod(ACC_PUBLIC, "doAction", "([Ljava/lang/Object;)Ljava/lang/Object;", null, null);
 			methodVisitor.visitCode();
 			Label l0 = new Label();
 			methodVisitor.visitLabel(l0);
@@ -94,8 +101,8 @@ public final class FieldReadGenerator extends InsteadActionGenerator {
 
 	@Override
 	public void modifyOuterClass(ClassVisitor cv) {
-		MethodVisitor methodVisitor = cv.visitMethod(ACC_STATIC | ACC_SYNTHETIC, accessorName, accessorDesc, null,
-				null);
+		MethodVisitor methodVisitor = cv
+				.visitMethod(ACC_STATIC | ACC_SYNTHETIC, accessorName, accessorDesc, null, null);
 		methodVisitor.visitCode();
 		methodVisitor.visitVarInsn(ALOAD, 0);
 		methodVisitor.visitFieldInsn(GETFIELD, outerClass, fieldName, fieldDesc);

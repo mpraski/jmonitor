@@ -28,7 +28,9 @@ public class ClassAdapter extends ClassVisitor implements Opcodes {
 	private int accessorIndex;
 	private int innerClassIndex;
 
-	public ClassAdapter(ClassVisitor classVisitor, List<EventPatternMatcher> matchers,
+	public ClassAdapter(
+			ClassVisitor classVisitor,
+			List<EventPatternMatcher> matchers,
 			Map<EventType, List<EventPatternMatcher>> mapped) {
 		super(ASM5, classVisitor);
 
@@ -76,11 +78,27 @@ public class ClassAdapter extends ClassVisitor implements Opcodes {
 		if (mv != null) {
 			LocalVariablesSorter sorter = new LocalVariablesSorter(access, desc, mv);
 
-			InstrumentationAdapter instrument = new InstrumentationAdapter(owner, access, name, desc, source, this,
+			InstrumentationAdapter instrument = new InstrumentationAdapter(
+					owner,
+					access,
+					name,
+					desc,
+					source,
+					this,
 					sorter);
 
-			mv = new MethodAdapter(name, desc, source, owner, instrument, matchers, mapped, matchesFrom, eventsBefore,
-					eventsAfter, eventsInstead);
+			mv = new MethodAdapter(
+					name,
+					desc,
+					source,
+					owner,
+					instrument,
+					matchers,
+					mapped,
+					matchesFrom,
+					eventsBefore,
+					eventsAfter,
+					eventsInstead);
 		}
 
 		return mv;

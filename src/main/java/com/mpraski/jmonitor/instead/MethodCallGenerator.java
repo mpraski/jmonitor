@@ -20,8 +20,14 @@ public final class MethodCallGenerator extends InsteadActionGenerator {
 	private final String calleeDesc;
 	private final List<Type> argTypes;
 
-	public MethodCallGenerator(String innerClass, String outerClass, String methodName, String methodDesc,
-			String calleeName, String calleeDesc, List<Type> argTypes) {
+	public MethodCallGenerator(
+			String innerClass,
+			String outerClass,
+			String methodName,
+			String methodDesc,
+			String calleeName,
+			String calleeDesc,
+			List<Type> argTypes) {
 		super(innerClass, outerClass, methodName, methodDesc);
 		this.calleeName = calleeName;
 		this.calleeDesc = calleeDesc;
@@ -67,8 +73,8 @@ public final class MethodCallGenerator extends InsteadActionGenerator {
 		}
 
 		{
-			methodVisitor = classWriter.visitMethod(ACC_PUBLIC, "doAction", "([Ljava/lang/Object;)Ljava/lang/Object;",
-					null, null);
+			methodVisitor = classWriter
+					.visitMethod(ACC_PUBLIC, "doAction", "([Ljava/lang/Object;)Ljava/lang/Object;", null, null);
 			methodVisitor.visitCode();
 
 			Label l0 = new Label();

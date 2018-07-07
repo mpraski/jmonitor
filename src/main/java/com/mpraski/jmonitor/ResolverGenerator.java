@@ -20,8 +20,13 @@ public class ResolverGenerator implements Opcodes {
 		FieldVisitor fieldVisitor;
 		MethodVisitor methodVisitor;
 
-		classWriter.visit(V1_8, ACC_PUBLIC | ACC_FINAL | ACC_SUPER, "com/mpraski/jmonitor/Resolver", null,
-				"java/lang/Object", null);
+		classWriter.visit(
+				V1_8,
+				ACC_PUBLIC | ACC_FINAL | ACC_SUPER,
+				"com/mpraski/jmonitor/Resolver",
+				null,
+				"java/lang/Object",
+				null);
 
 		methodVisitor = classWriter.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
 		methodVisitor.visitCode();

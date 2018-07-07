@@ -18,12 +18,6 @@ import static com.mpraski.jmonitor.util.Constants.typeOfDouble;
 import static com.mpraski.jmonitor.util.Constants.typeOfFloat;
 import static com.mpraski.jmonitor.util.Constants.typeOfInteger;
 import static com.mpraski.jmonitor.util.Constants.typeOfLong;
-import static com.mpraski.jmonitor.util.EventUtil.eventOrder;
-import static com.mpraski.jmonitor.util.EventUtil.eventType;
-import static com.mpraski.jmonitor.util.TypeUtil.getLoadStoreInsns;
-import static com.mpraski.jmonitor.util.TypeUtil.getPrimitiveClass;
-import static com.mpraski.jmonitor.util.TypeUtil.isReference;
-import static com.mpraski.jmonitor.util.TypeUtil.takesTwoWords;
 
 import java.util.Arrays;
 import java.util.List;
@@ -42,6 +36,7 @@ import com.mpraski.jmonitor.instead.InsteadActionGenerator;
 import com.mpraski.jmonitor.instead.MethodCallGenerator;
 import com.mpraski.jmonitor.instead.NewInstanceGenerator;
 import com.mpraski.jmonitor.util.Pair;
+import com.mpraski.jmonitor.util.EventUtil;
 import com.mpraski.jmonitor.util.TypeUtil;
 
 public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
@@ -81,8 +76,14 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 	private int generatedArgsArray;
 	private int currentNumArgs;
 
-	public InstrumentationAdapter(String owner, int access, String name, String descriptor, String source,
-			ClassAdapter adapter, LocalVariablesSorter sorter) {
+	public InstrumentationAdapter(
+			String owner,
+			int access,
+			String name,
+			String descriptor,
+			String source,
+			ClassAdapter adapter,
+			LocalVariablesSorter sorter) {
 		super(ASM5, owner, access, name, descriptor, sorter);
 
 		this.adapter = adapter;
@@ -233,7 +234,7 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 		super.visitInsn(ACONST_NULL);
 		visitEventEnd(e);
 
-		if (isReference(oldType))
+		if (TypeUtil.isReference(oldType))
 			super.visitTypeInsn(CHECKCAST, oldType.getInternalName());
 		else
 			unbox(oldType);
@@ -262,8 +263,15 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 		String nextInnerClass = adapter.getNextInnerClass();
 		String nextAccessor = adapter.getNextAccessor();
 
-		InsteadActionGenerator action = new FieldReadGenerator(nextInnerClass, owner, name, desc, nextAccessor,
-				"(" + ownerType.getDescriptor() + ")" + e.getDesc(), e.getName(), e.getDesc());
+		InsteadActionGenerator action = new FieldReadGenerator(
+				nextInnerClass,
+				owner,
+				name,
+				desc,
+				nextAccessor,
+				"(" + ownerType.getDescriptor() + ")" + e.getDesc(),
+				e.getName(),
+				e.getDesc());
 
 		adapter.addActionGenerator(action);
 
@@ -272,7 +280,7 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 		super.visitInsn(ACONST_NULL);
 		visitEventEndWithAction(e);
 
-		if (isReference(oldType))
+		if (TypeUtil.isReference(oldType))
 			super.visitTypeInsn(CHECKCAST, oldType.getInternalName());
 		else
 			unbox(oldType);
@@ -285,8 +293,15 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 		String nextInnerClass = adapter.getNextInnerClass();
 		String nextAccessor = adapter.getNextAccessor();
 
-		InsteadActionGenerator action = new FieldWriteGenerator(nextInnerClass, owner, name, desc, nextAccessor,
-				"(" + ownerType.getDescriptor() + e.getDesc() + ")V", e.getName(), e.getDesc());
+		InsteadActionGenerator action = new FieldWriteGenerator(
+				nextInnerClass,
+				owner,
+				name,
+				desc,
+				nextAccessor,
+				TypeUtil.methodOf(Type.VOID_TYPE, ownerType, Type.getType(e.getDesc())),
+				e.getName(),
+				e.getDesc());
 
 		adapter.addActionGenerator(action);
 
@@ -323,8 +338,14 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 
 		super.visitInsn(POP);
 
-		InsteadActionGenerator action = new MethodCallGenerator(nextInnerClass, owner, name, desc, methodName,
-				e.getDesc(), arrayAndTypes.getValue());
+		InsteadActionGenerator action = new MethodCallGenerator(
+				nextInnerClass,
+				owner,
+				name,
+				desc,
+				methodName,
+				e.getDesc(),
+				arrayAndTypes.getValue());
 
 		adapter.addActionGenerator(action);
 
@@ -333,7 +354,7 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 		super.visitVarInsn(ALOAD, arrayAndTypes.getKey());
 		visitEventEndWithAction(e);
 
-		if (isReference(retType))
+		if (TypeUtil.isReference(retType))
 			super.visitTypeInsn(CHECKCAST, retType.getInternalName());
 		else
 			unbox(retType);
@@ -349,8 +370,14 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 
 		super.visitInsn(POP2);
 
-		InsteadActionGenerator action = new NewInstanceGenerator(nextInnerClass, owner, name, desc,
-				retType.getInternalName(), e.getDesc(), arrayAndTypes.getValue());
+		InsteadActionGenerator action = new NewInstanceGenerator(
+				nextInnerClass,
+				owner,
+				name,
+				desc,
+				retType.getInternalName(),
+				e.getDesc(),
+				arrayAndTypes.getValue());
 
 		adapter.addActionGenerator(action);
 
@@ -365,7 +392,10 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	public void visitEventStart(EventData e) {
-		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/Resolver", e.getMonitor(),
+		super.visitFieldInsn(
+				GETSTATIC,
+				"com/mpraski/jmonitor/Resolver",
+				e.getMonitor(),
 				e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClassType : monitorClassType);
 		super.visitTypeInsn(NEW, "com/mpraski/jmonitor/Event");
 		super.visitInsn(DUP);
@@ -375,10 +405,16 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 		else
 			super.visitLdcInsn(e.getTag());
 
-		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/EventType", eventType(e.getType()),
+		super.visitFieldInsn(
+				GETSTATIC,
+				"com/mpraski/jmonitor/EventType",
+				EventUtil.eventType(e.getType()),
 				"Lcom/mpraski/jmonitor/EventType;");
 
-		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/EventOrder", eventOrder(e.getOrder()),
+		super.visitFieldInsn(
+				GETSTATIC,
+				"com/mpraski/jmonitor/EventOrder",
+				EventUtil.eventOrder(e.getOrder()),
 				"Lcom/mpraski/jmonitor/EventOrder;");
 
 		if (source == null)
@@ -390,7 +426,10 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 	}
 
 	public void visitEventStartWithSwap(EventData e) {
-		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/Resolver", e.getMonitor(),
+		super.visitFieldInsn(
+				GETSTATIC,
+				"com/mpraski/jmonitor/Resolver",
+				e.getMonitor(),
 				e.getOrder() == EventOrder.INSTEAD ? insteadMonitorClassType : monitorClassType);
 		super.visitInsn(SWAP);
 		super.visitTypeInsn(NEW, "com/mpraski/jmonitor/Event");
@@ -404,12 +443,18 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 
 		super.visitInsn(SWAP);
 
-		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/EventType", eventType(e.getType()),
+		super.visitFieldInsn(
+				GETSTATIC,
+				"com/mpraski/jmonitor/EventType",
+				EventUtil.eventType(e.getType()),
 				"Lcom/mpraski/jmonitor/EventType;");
 
 		super.visitInsn(SWAP);
 
-		super.visitFieldInsn(GETSTATIC, "com/mpraski/jmonitor/EventOrder", eventOrder(e.getOrder()),
+		super.visitFieldInsn(
+				GETSTATIC,
+				"com/mpraski/jmonitor/EventOrder",
+				EventUtil.eventOrder(e.getOrder()),
 				"Lcom/mpraski/jmonitor/EventOrder;");
 
 		super.visitInsn(SWAP);
@@ -428,14 +473,25 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 
 	public void visitEventEnd(EventData e) {
 		super.visitMethodInsn(INVOKESTATIC, "java/lang/Thread", "currentThread", "()Ljava/lang/Thread;", false);
-		super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Thread", "getStackTrace", "()[Ljava/lang/StackTraceElement;",
+		super.visitMethodInsn(
+				INVOKEVIRTUAL,
+				"java/lang/Thread",
+				"getStackTrace",
+				"()[Ljava/lang/StackTraceElement;",
 				false);
-		super.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/Event", "<init>",
+		super.visitMethodInsn(
+				INVOKESPECIAL,
+				"com/mpraski/jmonitor/Event",
+				"<init>",
 				"(Ljava/lang/String;Lcom/mpraski/jmonitor/EventType;Lcom/mpraski/jmonitor/EventOrder;Ljava/lang/String;ILjava/lang/Object;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
 				false);
 		if (e.getOrder() == EventOrder.INSTEAD)
-			super.visitMethodInsn(INVOKEINTERFACE, insteadMonitorClass, insteadMonitorClassFunc,
-					insteadMonitorClassFuncType, true);
+			super.visitMethodInsn(
+					INVOKEINTERFACE,
+					insteadMonitorClass,
+					insteadMonitorClassFunc,
+					insteadMonitorClassFuncType,
+					true);
 		else
 			super.visitMethodInsn(INVOKEINTERFACE, monitorClass, monitorClassFunc, monitorClassFuncType, true);
 	}
@@ -449,27 +505,49 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 		super.visitInsn(AASTORE);
 
 		super.visitMethodInsn(INVOKESTATIC, "java/lang/Thread", "currentThread", "()Ljava/lang/Thread;", false);
-		super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Thread", "getStackTrace", "()[Ljava/lang/StackTraceElement;",
+		super.visitMethodInsn(
+				INVOKEVIRTUAL,
+				"java/lang/Thread",
+				"getStackTrace",
+				"()[Ljava/lang/StackTraceElement;",
 				false);
-		super.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/Event", "<init>",
+		super.visitMethodInsn(
+				INVOKESPECIAL,
+				"com/mpraski/jmonitor/Event",
+				"<init>",
 				"(Ljava/lang/String;Lcom/mpraski/jmonitor/EventType;Lcom/mpraski/jmonitor/EventOrder;Ljava/lang/String;ILjava/lang/Object;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
 				false);
 		if (e.getOrder() == EventOrder.INSTEAD)
-			super.visitMethodInsn(INVOKEINTERFACE, insteadMonitorClass, insteadMonitorClassFunc,
-					insteadMonitorClassFuncType, true);
+			super.visitMethodInsn(
+					INVOKEINTERFACE,
+					insteadMonitorClass,
+					insteadMonitorClassFunc,
+					insteadMonitorClassFuncType,
+					true);
 		else
 			super.visitMethodInsn(INVOKEINTERFACE, monitorClass, monitorClassFunc, monitorClassFuncType, true);
 	}
 
 	public void visitEventEndWithAction(EventData e) {
 		super.visitMethodInsn(INVOKESTATIC, "java/lang/Thread", "currentThread", "()Ljava/lang/Thread;", false);
-		super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Thread", "getStackTrace", "()[Ljava/lang/StackTraceElement;",
+		super.visitMethodInsn(
+				INVOKEVIRTUAL,
+				"java/lang/Thread",
+				"getStackTrace",
+				"()[Ljava/lang/StackTraceElement;",
 				false);
-		super.visitMethodInsn(INVOKESPECIAL, "com/mpraski/jmonitor/Event", "<init>",
+		super.visitMethodInsn(
+				INVOKESPECIAL,
+				"com/mpraski/jmonitor/Event",
+				"<init>",
 				"(Ljava/lang/String;Lcom/mpraski/jmonitor/EventType;Lcom/mpraski/jmonitor/EventOrder;Ljava/lang/String;ILcom/mpraski/jmonitor/InsteadAction;[Ljava/lang/Object;[Ljava/lang/StackTraceElement;)V",
 				false);
-		super.visitMethodInsn(INVOKEINTERFACE, insteadMonitorClass, insteadMonitorClassFunc,
-				insteadMonitorClassFuncType, true);
+		super.visitMethodInsn(
+				INVOKEINTERFACE,
+				insteadMonitorClass,
+				insteadMonitorClassFunc,
+				insteadMonitorClassFuncType,
+				true);
 	}
 
 	public void newInsteadAction(InsteadActionGenerator action, Type ownerType) {
@@ -492,7 +570,7 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 	private int captureLocal() {
 		Type topType = getTopType();
 
-		if (takesTwoWords(topType))
+		if (TypeUtil.takesTwoWords(topType))
 			super.visitInsn(DUP2);
 		else
 			super.visitInsn(DUP);
@@ -523,14 +601,14 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 
 		for (int i = numArgs - 1; i >= 0; i--) {
 			topType = getTopType();
-			twoWords = takesTwoWords(topType);
+			twoWords = TypeUtil.takesTwoWords(topType);
 
 			if (twoWords)
 				super.visitInsn(DUP2);
 			else
 				super.visitInsn(DUP);
 
-			Pair<Integer, Integer> insns = getLoadStoreInsns(topType);
+			Pair<Integer, Integer> insns = TypeUtil.getLoadStoreInsns(topType);
 
 			int l = sorter.newLocal(topType);
 			super.visitVarInsn(insns.getKey(), l);
@@ -578,14 +656,14 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 
 			super.visitVarInsn(ALOAD, methodArgs);
 
-			if (takesTwoWords(topType)) {
+			if (TypeUtil.takesTwoWords(topType)) {
 				super.visitInsn(DUP_X2);
 				super.visitInsn(POP);
 			} else {
 				super.visitInsn(SWAP);
 			}
 
-			if (!isReference(topType))
+			if (!TypeUtil.isReference(topType))
 				boxWithoutDup(topType);
 
 			pushInt(i);
@@ -677,7 +755,7 @@ public class InstrumentationAdapter extends AnalyzerAdapter implements Opcodes {
 		if (desc.length() > 1)
 			return;
 
-		Pair<String, String> type = getPrimitiveClass(desc);
+		Pair<String, String> type = TypeUtil.getPrimitiveClass(desc);
 
 		super.visitMethodInsn(INVOKESTATIC, type.getKey(), "valueOf", type.getValue(), false);
 	}

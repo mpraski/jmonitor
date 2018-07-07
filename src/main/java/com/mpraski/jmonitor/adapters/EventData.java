@@ -14,7 +14,13 @@ public final class EventData {
 		this.order = order;
 	}
 
-	public EventData(EventType type, String tag, String monitor, EventOrder order, String name, String desc,
+	public EventData(
+			EventType type,
+			String tag,
+			String monitor,
+			EventOrder order,
+			String name,
+			String desc,
 			String owner) {
 		this.type = type;
 		this.tag = tag;
@@ -33,8 +39,15 @@ public final class EventData {
 		this.name = name;
 	}
 
-	public EventData(EventType type, String tag, String monitor, EventOrder order, String name, int numArgs,
-			String desc, Type retType) {
+	public EventData(
+			EventType type,
+			String tag,
+			String monitor,
+			EventOrder order,
+			String name,
+			int numArgs,
+			String desc,
+			Type retType) {
 		this.type = type;
 		this.tag = tag;
 		this.monitor = monitor;
